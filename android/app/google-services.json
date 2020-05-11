@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "607373739537",
+    "firebase_url": "https://kgmskid.firebaseio.com",
+    "project_id": "kgmskid",
+    "storage_bucket": "kgmskid.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:607373739537:android:4bff5a8b9d75612df253b0",
+        "android_client_info": {
+          "package_name": "com.kgmskid.kgms_admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "607373739537-b3m2ccthkjnvv332g0hgcerbafngkvgj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc1bwNB_a0eNlepWVBHi1TTOs4PMkwfG0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "607373739537-b3m2ccthkjnvv332g0hgcerbafngkvgj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
