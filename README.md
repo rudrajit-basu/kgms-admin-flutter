@@ -1,6 +1,6 @@
 # kgms_admin
 
-A new Flutter project.
+A Flutter project to create android app for Khela Ghar Montessory School admin use.
 
 ## Getting Started
 
