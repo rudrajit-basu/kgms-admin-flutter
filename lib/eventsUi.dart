@@ -169,12 +169,12 @@ class KgmsEventsAppBar extends StatelessWidget implements PreferredSizeWidget {
             tooltip: 'add event',
             onPressed: () {
               // print('totE: $_totEvents');
-              if (totalEvents.getTotalEvents() < 6) {
+              if (totalEvents.getTotalEvents() < 10) {
                 _eventNavigation(
                     context, KgmsEventsFSD(document: null, isDelete: false));
               } else {
                 Scaffold.of(context)
-                    .showSnackBar(kSnackbar('Max 6 Events Allowed.'));
+                    .showSnackBar(kSnackbar('Max 10 Events Allowed.'));
               }
             },
           ),
@@ -188,7 +188,6 @@ class KgmsEvents extends StatelessWidget {
   KgmsEvents({Key key}) : super(key: key);
 
   final _totalEvents = _TotalEvents();
-
 
   @override
   Widget build(BuildContext context) {
@@ -228,13 +227,17 @@ class KgmsEventsFSDAppBar extends StatelessWidget
             iconSize: 27,
             onPressed: () async {
               // print('Delete doc: $docID');
+              final KCircularProgress cp = KCircularProgress(ctx: context);
+              cp.showCircularProgress();
               try {
                 await kEventsCollectionRef.document(docID).delete();
+                cp.showCircularProgress();
                 Navigator.pop(context);
                 Navigator.pop(context, 'Event deleted successfully..!!');
               } catch (e) {
                 // _scaffoldKey2.currentState.showSnackBar(
                 //     kSnackbar('Delete unsuccessful. Please check.'));
+                cp.showCircularProgress();
                 Scaffold.of(context).showSnackBar(
                     kSnackbar('Delete unsuccessful. Please check.'));
               }
@@ -254,7 +257,7 @@ class KgmsEventsFSDAppBar extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text('Edit Event'),
+      title: Text(isDelete ? 'Edit Event' : 'Add Event'),
       leading: IconButton(
         icon: Icon(Icons.close),
         onPressed: () {
@@ -334,7 +337,7 @@ class KgmsEventsForm extends StatefulWidget {
 }
 
 class _KgmsEventsFormState extends State<KgmsEventsForm> {
-  final _formKey = GlobalKey<FormState>();
+  GlobalKey<FormState> _formKey;
   // String ddbValue;
 
   final _subtitleFocus = FocusNode();
@@ -348,9 +351,15 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
   TextEditingController _subHeaderCtrl;
   TextEditingController _descCtrl;
 
+  final List<String> _eventNumList = ['1', '2'];
+
   @override
   void initState() {
     super.initState();
+    _formKey = GlobalKey<FormState>();
+    for (var i = 3; i < 11; i++) {
+      _eventNumList.add(i.toString());
+    }
     _idCtrl =
         widget.document != null ? widget.document['tagId'].toString() : '1';
     _headerCtrl = TextEditingController(
@@ -386,7 +395,7 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                 decoration: const InputDecoration(
                   labelText: 'Event Id*',
                   labelStyle: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                   border: OutlineInputBorder(),
@@ -405,8 +414,8 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                     _idCtrl = newValue;
                   });
                 }),
-                items: <String>['1', '2', '3', '4', '5', '6']
-                    .map<DropdownMenuItem<String>>((String value) {
+                items:
+                    _eventNumList.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(
@@ -432,7 +441,7 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                 decoration: const InputDecoration(
                   labelText: 'Header*',
                   labelStyle: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                   border: OutlineInputBorder(),
@@ -466,7 +475,7 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                 decoration: const InputDecoration(
                   labelText: 'Sub Header*',
                   labelStyle: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                   border: OutlineInputBorder(),
@@ -501,7 +510,7 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                 decoration: const InputDecoration(
                   labelText: 'Description*',
                   labelStyle: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                   border: OutlineInputBorder(),
@@ -517,7 +526,7 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                   letterSpacing: 0.9,
                 ),
                 textInputAction: TextInputAction.newline,
-                maxLines: 8,
+                maxLines: 10,
                 minLines: 4,
                 focusNode: _descFocus,
               ),
@@ -531,6 +540,9 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                     if (_formKey.currentState.validate()) {
                       bool _internet = await isInternetAvailable();
                       if (_internet) {
+                        final KCircularProgress cp =
+                            KCircularProgress(ctx: context);
+                        cp.showCircularProgress();
                         if (widget.isDelete) {
                           bool _isUpdate = false;
                           var kDataMap = Map<String, dynamic>();
@@ -563,13 +575,16 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                               await kEventsCollectionRef
                                   .document(widget.document.documentID)
                                   .updateData(kDataMap);
+                              cp.closeProgress();
                               Navigator.pop(context, 'Update success..!!');
                             } catch (e) {
+                              cp.closeProgress();
                               Scaffold.of(context).showSnackBar(kSnackbar(
                                   'Update unsuccessful. Please check !'));
                             }
                           } else {
                             // print('nothing to update');
+                            cp.closeProgress();
                             Scaffold.of(context).showSnackBar(
                                 kSnackbar('Nothing to update..!!'));
                           }
@@ -583,12 +598,14 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                           try {
                             final DocumentReference _dR =
                                 await kEventsCollectionRef.add(kDataMap);
+                            cp.closeProgress();
                             if (_dR != null)
                               Navigator.pop(context, 'New event added...!!');
                             else
                               Scaffold.of(context).showSnackBar(kSnackbar(
                                   'New event unsuccessful. Please check !'));
                           } catch (e) {
+                            cp.closeProgress();
                             Scaffold.of(context).showSnackBar(kSnackbar(
                                 'New event unsuccessful. Please check !'));
                           }

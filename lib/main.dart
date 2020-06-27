@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'eventsUi.dart';
+import 'studyUi.dart';
 import 'self.dart';
 
 void main() => runApp(KgmsApp());
@@ -48,10 +49,10 @@ class KgmsLoginPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 30, top: 15),
                     child: Image(
-                        image: AssetImage('images/kgms_logo.png'),
-                        fit: BoxFit.cover,
-                        height: 165,
-                        ),
+                      image: AssetImage('images/kgms_logo.png'),
+                      fit: BoxFit.cover,
+                      height: 165,
+                    ),
                   ),
                   KgmsLogin(),
                 ],
@@ -82,18 +83,21 @@ class _KgmsLoginState extends State<KgmsLogin> {
   @override
   void initState() {
     super.initState();
-    fServ.getCurrentUser().then((uid) {
-      if (uid != null) {
-        // print('uid $uid');
-        // Navigator.of(context).push(_createRoute(KgmsMain(userN: uid)));
-        _loginNavigate(context, KgmsMain(userN: uid));
-      }else{
-        SharedPreferences.getInstance().then((prefs) {
-      this.setState((){
-          _uidCtrl.text = prefs.getString('kUserName') ?? '';
-        });
-    });
-      }
+    // fServ.getCurrentUser().then((uid) {
+    //   if (uid != null) {
+    //     _loginNavigate(context, KgmsMain(userN: uid));
+    //   } else {
+    //     SharedPreferences.getInstance().then((prefs) {
+    //       this.setState(() {
+    //         _uidCtrl.text = prefs.getString('kUserName') ?? '';
+    //       });
+    //     });
+    //   }
+    // });
+    SharedPreferences.getInstance().then((prefs) {
+      this.setState(() {
+        _uidCtrl.text = prefs.getString('kUserName') ?? '';
+      });
     });
   }
 
@@ -101,13 +105,12 @@ class _KgmsLoginState extends State<KgmsLogin> {
   void dispose() {
     _uidCtrl.dispose();
     _passwdCtrl.dispose();
-    // fServ.signOut();
+    fServ.signOut();
     // print("login disposed.....");
     super.dispose();
   }
 
   void _loginNavigate(BuildContext context, KgmsMain kgm) async {
-    // await Navigator.of(context).push(_createRoute(kgm));
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -115,9 +118,9 @@ class _KgmsLoginState extends State<KgmsLogin> {
       ),
     );
     final prefs = await SharedPreferences.getInstance();
-    this.setState((){
-        _uidCtrl.text = prefs.getString('kUserName') ?? '';
-      });
+    this.setState(() {
+      _uidCtrl.text = prefs.getString('kUserName') ?? '';
+    });
   }
 
   @override
@@ -216,24 +219,23 @@ class _KgmsLoginState extends State<KgmsLogin> {
                     if (_loginFormKey.currentState.validate()) {
                       bool _internet = await isInternetAvailable();
                       if (_internet) {
-                        // print("internet OK...!!");
+                        final KCircularProgress cp =
+                            KCircularProgress(ctx: context);
+                        cp.showCircularProgress();
                         bool _signIn =
                             await fServ.signIn(_uidCtrl.text, _passwdCtrl.text);
                         if (_signIn) {
-                          // print("signed successful.......!!");
                           SharedPreferences.getInstance().then((prefs) {
                             prefs.setString('kUserName', _uidCtrl.text);
                           });
                           String _userEmail = await fServ.getCurrentUser();
-                          // Navigator.of(context)
-                          //     .push(_createRoute(KgmsMain(userN: _userEmail)));
+                          cp.closeProgress();
                           _loginNavigate(context, KgmsMain(userN: _userEmail));
                         } else {
-                          // print("signed not successful...........!!");
+                          cp.closeProgress();
                           kAlert(context, wrongLogin);
                         }
                       } else {
-                        // print("internet No...!!");
                         kAlert(context, noInternetWidget);
                       }
                     }
@@ -320,6 +322,8 @@ class KgmsMain extends StatelessWidget {
     List<FloatingActionButton> fabList = new List();
     fabList
         .add(_buildMainButtons(ctx, 'Events', KgmsEvents(), Icons.event, true));
+    fabList.add(
+        _buildMainButtons(ctx, 'Study', KgmsClassStudy(), Icons.face, true));
     // fabList.add(_buildMainButtons(ctx, 'Accounts', null, Icons.business));
     return fabList;
   }

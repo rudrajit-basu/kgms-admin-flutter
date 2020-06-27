@@ -1,0 +1,1350 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'self.dart';
+
+final kClassesCollectionRef = Firestore.instance.collection('kgms-classes');
+
+// class StudyClassesModel {
+//   final String tagNo;
+//   final String classId;
+//   final String className;
+//   final String classPassword;
+
+//   StudyClassesModel(
+//       this.tagNo, this.classId, this.className, this.classPassword);
+// }
+
+class _TotalKlist {
+  int _totalKList = 0;
+
+  int getTotalKlist() {
+    return _totalKList;
+  }
+
+  void setTotalKList(int tList) {
+    this._totalKList = tList;
+  }
+}
+
+class KgmsStudyClassAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  final _TotalKlist totalClasses;
+
+  KgmsStudyClassAppBar({Key key, @required this.totalClasses})
+      : preferredSize = Size.fromHeight(kToolbarHeight),
+        super(key: key);
+
+  @override
+  final Size preferredSize;
+
+  void _kClassNavigation(BuildContext context, KgmsClassCredential kcc) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => kcc,
+      ),
+    );
+    if (result != null) {
+      Scaffold.of(context).showSnackBar(kSnackbar(result));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text('Study Classes'),
+      actions: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: IconButton(
+            icon: const Icon(Icons.add, size: 30),
+            tooltip: 'add new class',
+            onPressed: () {
+              // print('add new class');
+              if (totalClasses.getTotalKlist() < 12) {
+                _kClassNavigation(context,
+                    KgmsClassCredential(kClassDocument: null, isDelete: false));
+              } else {
+                Scaffold.of(context)
+                    .showSnackBar(kSnackbar('Max 12 Classes Allowed.'));
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class KgmsStudyClassBody extends StatelessWidget {
+  final _TotalKlist totalClasses;
+
+  KgmsStudyClassBody({Key key, @required this.totalClasses}) : super(key: key);
+
+  Card _loadingTile(String msg) => Card(
+        color: Colors.orange[300],
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        child: ListTile(
+          title: Text(
+            msg,
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          leading: CircleAvatar(
+            child: Text(
+              '0',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      );
+
+  Card _studyClassesTile(
+          BuildContext context, DocumentSnapshot document, int index) =>
+      Card(
+        color: Colors.orange[300],
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        child: ListTile(
+            title: Text(
+              document['className'],
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Text('class id: ${document['classId']}'),
+            ),
+            leading: CircleAvatar(
+              child: Text(
+                (index + 1).toString(),
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            trailing: IconButton(
+              icon: Icon(Icons.lock_open),
+              tooltip: 'change credentials',
+              onPressed: () {
+                // print('change credentials pressed !');
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => KgmsClassCredential(kClassDocument: document, isDelete: true),
+                //   ),
+                // );
+                _kClassNavigation(
+                    context,
+                    KgmsClassCredential(
+                        kClassDocument: document, isDelete: true));
+              },
+            ),
+            onTap: () {
+              // print('kgms class pressed !');
+              _KgmsClassCurrentDoc.docId = document.documentID;
+              _KgmsClassCurrentDoc.className = document['className'];
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => KgmsStudy(),
+                ),
+              );
+            }),
+      );
+
+  void _kClassNavigation(BuildContext context, KgmsClassCredential kcc) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => kcc,
+      ),
+    );
+    if (result != null) {
+      Scaffold.of(context).showSnackBar(kSnackbar(result));
+    }
+  }
+
+  // List<Card> listStudyClasses(BuildContext ctx, int count) => List.generate(
+  //     count,
+  //     (i) => _studyClassesTile(
+  //         ctx,
+  //         StudyClassesModel(
+  //             (i + 1).toString(), 'ogroup', 'O Group', 'cat123')));
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: kClassesCollectionRef.orderBy('classId').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot == null) {
+          return _loadingTile('Please check the internet connection !');
+        } else {
+          if (snapshot.hasError)
+            return _loadingTile('Something went wrong. Try later..!!');
+          else
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+                return _loadingTile('Loading....');
+              default:
+                {
+                  totalClasses.setTotalKList(snapshot.data.documents.length);
+                  return ListView.builder(
+                    itemCount: snapshot.data.documents.length,
+                    itemBuilder: (context, index) => _studyClassesTile(
+                        context, snapshot.data.documents[index], index),
+                  );
+                }
+            }
+        }
+      },
+    );
+  }
+}
+
+class KgmsClassStudy extends StatelessWidget {
+  KgmsClassStudy({Key key}) : super(key: key);
+
+  final _totalClasses = _TotalKlist();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: KgmsStudyClassAppBar(totalClasses: _totalClasses),
+      body: KgmsStudyClassBody(totalClasses: _totalClasses),
+    );
+  }
+}
+
+class KgmsClassCredentialAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  final DocumentSnapshot kClassDocument;
+  final bool isDelete;
+
+  KgmsClassCredentialAppBar(
+      {Key key, this.kClassDocument, @required this.isDelete})
+      : preferredSize = Size.fromHeight(kToolbarHeight),
+        super(key: key);
+
+  @override
+  final Size preferredSize;
+
+  AlertDialog _deleteAlertW(BuildContext context, String docID) => AlertDialog(
+        title: const Text('Are you sure to delete ?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+        titleTextStyle: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w500,
+          fontSize: 17,
+        ),
+        elevation: 15,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.done),
+            iconSize: 27,
+            onPressed: () async {
+              // print('Delete doc: $docID');
+              final KCircularProgress cp = KCircularProgress(ctx: context);
+              cp.showCircularProgress();
+              try {
+                QuerySnapshot snapshot = await kClassesCollectionRef
+                    .document(docID)
+                    .collection('kgms-study')
+                    .getDocuments();
+
+                for (DocumentSnapshot ds in snapshot.documents) {
+                  // print('DocID => ${ds.documentID}');
+                  await kClassesCollectionRef
+                      .document(docID)
+                      .collection('kgms-study')
+                      .document(ds.documentID)
+                      .delete();
+                }
+
+                await kClassesCollectionRef.document(docID).delete();
+                cp.closeProgress();
+                Navigator.pop(context);
+                Navigator.pop(context, 'Class deleted successfully..!!');
+              } catch (e) {
+                // _scaffoldKey2.currentState.showSnackBar(
+                //     kSnackbar('Delete unsuccessful. Please check.'));
+                cp.closeProgress();
+                Scaffold.of(context).showSnackBar(
+                    kSnackbar('Delete unsuccessful. Please check.'));
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.clear),
+            iconSize: 27,
+            onPressed: () async {
+              // print('Nav Pop');
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text(isDelete ? 'Edit Class' : 'Add Class'),
+      leading: IconButton(
+        icon: Icon(Icons.close),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+      actions: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: IconButton(
+            icon: const Icon(Icons.delete_forever),
+            iconSize: 30,
+            tooltip: 'delete class',
+            onPressed: () {
+              // print('delete class');
+              if (!isDelete) {
+                Scaffold.of(context)
+                    .showSnackBar(kSnackbar('Cannot delete new class.'));
+              } else {
+                print('Delete Class Doc id: ${kClassDocument.documentID}');
+                kDAlert(
+                    context, _deleteAlertW(context, kClassDocument.documentID));
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class KgmsClassCredentialForm extends StatefulWidget {
+  final DocumentSnapshot kClassDocument;
+  final bool isDelete;
+
+  KgmsClassCredentialForm(
+      {Key key, this.kClassDocument, @required this.isDelete})
+      : super(key: key);
+
+  @override
+  _KgmsClassCredentialFormState createState() =>
+      _KgmsClassCredentialFormState();
+}
+
+class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
+  GlobalKey<FormState> _formKey;
+  TextEditingController _classNameCtrl;
+  TextEditingController _classIDCtrl;
+  TextEditingController _classPasswordCtrl;
+  TextEditingController _imgAlbumIdCtrl;
+
+  final _classIDFocus = FocusNode();
+  final _classPasswordFocus = FocusNode();
+  final _imgAlbumIdFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _formKey = GlobalKey<FormState>();
+    _classNameCtrl = TextEditingController(
+        text: widget.kClassDocument != null
+            ? widget.kClassDocument['className']
+            : '');
+    _classIDCtrl = TextEditingController(
+        text: widget.kClassDocument != null
+            ? widget.kClassDocument['classId']
+            : '');
+    _classPasswordCtrl = TextEditingController(
+        text: widget.kClassDocument != null
+            ? widget.kClassDocument['classPassword']
+            : '');
+    _imgAlbumIdCtrl = TextEditingController(
+        text: widget.kClassDocument != null
+            ? widget.kClassDocument['imgAlbumId']
+            : '');
+  }
+
+  @override
+  void dispose() {
+    _classNameCtrl.dispose();
+    _classIDCtrl.dispose();
+    _classPasswordCtrl.dispose();
+    _imgAlbumIdCtrl.dispose();
+    _formKey = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 15),
+              child: TextFormField(
+                controller: _classNameCtrl,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Class Name cannot be empty !';
+                  }
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Class Name*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                ),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 17,
+                  letterSpacing: 0.9,
+                ),
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (value) {
+                  FocusScope.of(context).requestFocus(_classIDFocus);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: TextFormField(
+                controller: _classIDCtrl,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Class ID cannot be empty !';
+                  }
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Class ID*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                ),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 17,
+                  letterSpacing: 0.9,
+                ),
+                focusNode: _classIDFocus,
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (value) {
+                  FocusScope.of(context).requestFocus(_classPasswordFocus);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: TextFormField(
+                controller: _classPasswordCtrl,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Class Password cannot be empty !';
+                  }
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Class Password*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                ),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 17,
+                  letterSpacing: 0.9,
+                ),
+                focusNode: _classPasswordFocus,
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (value) {
+                  FocusScope.of(context).requestFocus(_imgAlbumIdFocus);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: TextFormField(
+                controller: _imgAlbumIdCtrl,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Img Album ID cannot be empty !';
+                  }
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Img Album ID*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                ),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 17,
+                  letterSpacing: 0.9,
+                ),
+                focusNode: _imgAlbumIdFocus,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 17.0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: RaisedButton.icon(
+                  onPressed: () async {
+                    if (_formKey.currentState.validate()) {
+                      // print('Save Class Credentials');
+                      bool _internet = await isInternetAvailable();
+                      if (_internet) {
+                        final KCircularProgress cp =
+                            KCircularProgress(ctx: context);
+                        cp.showCircularProgress();
+                        if (widget.isDelete) {
+                          // print('Update Class');
+                          bool _isUpdate = false;
+                          var kDataMap = Map<String, dynamic>();
+                          if (_classNameCtrl.text !=
+                              widget.kClassDocument['className']) {
+                            _isUpdate = true;
+                            kDataMap['className'] = _classNameCtrl.text;
+                          }
+
+                          if (_classIDCtrl.text !=
+                              widget.kClassDocument['classId']) {
+                            _isUpdate = true;
+                            kDataMap['classId'] = _classIDCtrl.text;
+                          }
+
+                          if (_classPasswordCtrl.text !=
+                              widget.kClassDocument['classPassword']) {
+                            _isUpdate = true;
+                            kDataMap['classPassword'] = _classPasswordCtrl.text;
+                          }
+
+                          if (_imgAlbumIdCtrl.text !=
+                              widget.kClassDocument['imgAlbumId']) {
+                            _isUpdate = true;
+                            kDataMap['imgAlbumId'] = _imgAlbumIdCtrl.text;
+                          }
+
+                          if (_isUpdate) {
+                            try {
+                              await kClassesCollectionRef
+                                  .document(widget.kClassDocument.documentID)
+                                  .updateData(kDataMap);
+                              cp.closeProgress();
+                              Navigator.pop(context, 'Update success..!!');
+                            } catch (e) {
+                              cp.closeProgress();
+                              Scaffold.of(context).showSnackBar(kSnackbar(
+                                  'Update unsuccessful. Please check !'));
+                            }
+                          } else {
+                            cp.closeProgress();
+                            Scaffold.of(context).showSnackBar(
+                                kSnackbar('Nothing to update..!!'));
+                          }
+                        } else {
+                          // print('New Class');
+                          var kDataMap = Map<String, dynamic>();
+                          kDataMap['className'] = _classNameCtrl.text;
+                          kDataMap['classId'] = _classIDCtrl.text;
+                          kDataMap['classPassword'] = _classPasswordCtrl.text;
+                          kDataMap['imgAlbumId'] = _imgAlbumIdCtrl.text;
+
+                          try {
+                            final DocumentReference _dR =
+                                await kClassesCollectionRef.add(kDataMap);
+                            cp.closeProgress();
+                            if (_dR != null)
+                              Navigator.pop(context, 'New class added...!!');
+                            else
+                              Scaffold.of(context).showSnackBar(kSnackbar(
+                                  'New class unsuccessful. Please check !'));
+                          } catch (e) {
+                            cp.closeProgress();
+                            Scaffold.of(context).showSnackBar(kSnackbar(
+                                'New class unsuccessful. Please check !'));
+                          }
+                        }
+                      } else {
+                        kAlert(context, noInternetWidget);
+                      }
+                    }
+                  },
+                  label: Text(
+                    'Submit',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                    ),
+                  ),
+                  icon: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: const Icon(Icons.save, size: 28),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
+                  splashColor: Colors.yellow,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class KgmsClassCredential extends StatelessWidget {
+  final DocumentSnapshot kClassDocument;
+  final bool isDelete;
+
+  KgmsClassCredential({Key key, this.kClassDocument, @required this.isDelete})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus) {
+          currentFocus.unfocus();
+        }
+      },
+      child: Scaffold(
+        appBar: KgmsClassCredentialAppBar(
+            kClassDocument: kClassDocument, isDelete: isDelete),
+        body: Container(
+          color: Colors.orange[300],
+          alignment: Alignment.center,
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: KgmsClassCredentialForm(
+                  kClassDocument: kClassDocument, isDelete: isDelete),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// class KgmsStudyModel {
+//   final String studyId;
+//   final String studyHeader;
+//   final String studySubHeader;
+//   final String studyDesc;
+
+//   KgmsStudyModel(
+//       this.studyId, this.studyHeader, this.studySubHeader, this.studyDesc);
+// }
+
+class _KgmsClassCurrentDoc {
+  static String docId;
+  static String className;
+}
+
+class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final CollectionReference kStudyCollectionRef;
+  final _TotalKlist totalStudies;
+
+  KgmsStudyAppBar(
+      {Key key,
+      @required this.kStudyCollectionRef,
+      @required this.totalStudies})
+      : preferredSize = Size.fromHeight(kToolbarHeight),
+        super(key: key);
+
+  @override
+  final Size preferredSize;
+
+  void _kStudyNavigation(BuildContext context, StatelessWidget ksc) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ksc,
+      ),
+    );
+    if (result != null) {
+      Scaffold.of(context).showSnackBar(kSnackbar(result));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text('Study : ${_KgmsClassCurrentDoc.className}'),
+      actions: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: IconButton(
+            icon: const Icon(Icons.add, size: 30),
+            tooltip: 'add new study',
+            onPressed: () {
+              print('add new study');
+              if (totalStudies.getTotalKlist() < 16) {
+                _kStudyNavigation(
+                    context,
+                    KgmsStudyContent(
+                        kStudyDocument: null,
+                        isDelete: false,
+                        kStudyCollectionRef: kStudyCollectionRef));
+              } else {
+                Scaffold.of(context)
+                    .showSnackBar(kSnackbar('Max 16 Studies Allowed.'));
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class KgmsStudyBody extends StatelessWidget {
+  final CollectionReference kStudyCollectionRef;
+  final _TotalKlist totalStudies;
+
+  KgmsStudyBody(
+      {Key key,
+      @required this.kStudyCollectionRef,
+      @required this.totalStudies})
+      : super(key: key);
+
+  Card _loadingTile(String msg) => Card(
+        color: Colors.orange[300],
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        child: ListTile(
+          title: Text(
+            msg,
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          leading: CircleAvatar(
+            child: Text(
+              '0',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      );
+
+  void _kStudyNavigation(BuildContext context, KgmsStudyContent ksc) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ksc,
+      ),
+    );
+    if (result != null) {
+      Scaffold.of(context).showSnackBar(kSnackbar(result));
+    }
+  }
+
+  Card _studyTile(BuildContext context, DocumentSnapshot document) => Card(
+        color: Colors.orange[300],
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        child: ListTile(
+          title: Text(
+            document['header'],
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Text(document['subHeader']),
+          ),
+          leading: CircleAvatar(
+            child: Text(
+              document['studyNumber'].toString(),
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          trailing: IconButton(
+            icon: Icon(Icons.mode_edit),
+            tooltip: 'edit study',
+            onPressed: () {
+              // print('Edit study');
+              _kStudyNavigation(
+                  context,
+                  KgmsStudyContent(
+                      kStudyDocument: document,
+                      isDelete: true,
+                      kStudyCollectionRef: kStudyCollectionRef));
+            },
+          ),
+        ),
+      );
+
+  // List<Card> listStudy(BuildContext ctx, int count) => List.generate(
+  //     count,
+  //     (i) => _studyTile(
+  //         ctx,
+  //         KgmsStudyModel((i + 1).toString(), 'This is Header ${i + 1}',
+  //             '23rd June 1945', 'This is Description for ${i + 1}')));
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: kStudyCollectionRef.orderBy('studyNumber').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot == null) {
+          return _loadingTile('Please check the internet connection !');
+        } else {
+          if (snapshot.hasError)
+            return _loadingTile('Something went wrong. Try later..!!');
+          else
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+                return _loadingTile('Loading....');
+              default:
+                {
+                  totalStudies.setTotalKList(snapshot.data.documents.length);
+                  return ListView.builder(
+                    itemCount: snapshot.data.documents.length,
+                    itemBuilder: (context, index) =>
+                        _studyTile(context, snapshot.data.documents[index]),
+                  );
+                }
+            }
+        }
+      },
+    );
+  }
+}
+
+class KgmsStudy extends StatelessWidget {
+  KgmsStudy({Key key}) : super(key: key);
+
+  final kStudyCollectionRef = kClassesCollectionRef
+      .document(_KgmsClassCurrentDoc.docId)
+      .collection('kgms-study');
+
+  final _totalStudies = _TotalKlist();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: KgmsStudyAppBar(
+          kStudyCollectionRef: kStudyCollectionRef,
+          totalStudies: _totalStudies),
+      body: KgmsStudyBody(
+          kStudyCollectionRef: kStudyCollectionRef,
+          totalStudies: _totalStudies),
+    );
+  }
+}
+
+class KgmsStudyContent extends StatelessWidget {
+  final DocumentSnapshot kStudyDocument;
+  final bool isDelete;
+  final CollectionReference kStudyCollectionRef;
+
+  KgmsStudyContent(
+      {Key key,
+      this.kStudyDocument,
+      @required this.isDelete,
+      @required this.kStudyCollectionRef})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus) {
+          currentFocus.unfocus();
+        }
+      },
+      child: Scaffold(
+        appBar: KgmsStudyContentAppBar(
+            kStudyDocument: kStudyDocument,
+            isDelete: isDelete,
+            kStudyCollectionRef: kStudyCollectionRef),
+        body: Container(
+          color: Colors.orange[300],
+          alignment: Alignment.center,
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: KgmsStudyContentForm(
+                  kStudyDocument: kStudyDocument,
+                  isDelete: isDelete,
+                  kStudyCollectionRef: kStudyCollectionRef),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class KgmsStudyContentAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  final DocumentSnapshot kStudyDocument;
+  final bool isDelete;
+  final CollectionReference kStudyCollectionRef;
+
+  KgmsStudyContentAppBar(
+      {Key key,
+      this.kStudyDocument,
+      @required this.isDelete,
+      @required this.kStudyCollectionRef})
+      : preferredSize = Size.fromHeight(kToolbarHeight),
+        super(key: key);
+
+  @override
+  final Size preferredSize;
+
+  AlertDialog _deleteAlertW(BuildContext context, String docID) => AlertDialog(
+        title: const Text('Are you sure to delete ?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+        titleTextStyle: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w500,
+          fontSize: 17,
+        ),
+        elevation: 15,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.done),
+            iconSize: 27,
+            onPressed: () async {
+              // print('Delete doc: $docID');
+              final KCircularProgress cp = KCircularProgress(ctx: context);
+              cp.showCircularProgress();
+              try {
+                await kStudyCollectionRef.document(docID).delete();
+                cp.closeProgress();
+                Navigator.pop(context);
+                Navigator.pop(context, 'Study deleted successfully..!!');
+              } catch (e) {
+                // _scaffoldKey2.currentState.showSnackBar(
+                //     kSnackbar('Delete unsuccessful. Please check.'));
+                cp.closeProgress();
+                Scaffold.of(context).showSnackBar(
+                    kSnackbar('Delete unsuccessful. Please check.'));
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.clear),
+            iconSize: 27,
+            onPressed: () async {
+              // print('Nav Pop');
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text(isDelete
+          ? 'Edit Study: ${_KgmsClassCurrentDoc.className}'
+          : 'Add Study: ${_KgmsClassCurrentDoc.className}'),
+      leading: IconButton(
+        icon: Icon(Icons.close),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+      actions: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: IconButton(
+            icon: const Icon(Icons.delete_forever),
+            iconSize: 30,
+            tooltip: 'delete study',
+            onPressed: () {
+              print('delete study');
+              if (!isDelete) {
+                Scaffold.of(context)
+                    .showSnackBar(kSnackbar('Cannot delete new study.'));
+              } else {
+                print('Delete Class Doc id: ${kStudyDocument.documentID}');
+                kDAlert(
+                    context, _deleteAlertW(context, kStudyDocument.documentID));
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class KgmsStudyContentForm extends StatefulWidget {
+  final DocumentSnapshot kStudyDocument;
+  final bool isDelete;
+  final CollectionReference kStudyCollectionRef;
+
+  KgmsStudyContentForm(
+      {Key key,
+      this.kStudyDocument,
+      @required this.isDelete,
+      @required this.kStudyCollectionRef})
+      : super(key: key);
+
+  @override
+  _KgmsStudyContentFormState createState() => _KgmsStudyContentFormState();
+}
+
+class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
+  GlobalKey<FormState> _formKey;
+
+  String _idCtrl;
+  TextEditingController _headerCtrl;
+  TextEditingController _subHeaderCtrl;
+  TextEditingController _contentCtrl;
+
+  final _subHeaderFocus = FocusNode();
+  final _contentFocus = FocusNode();
+
+  final List<String> _studyNumList = ['1', '2'];
+
+  @override
+  void initState() {
+    super.initState();
+    _formKey = GlobalKey<FormState>();
+
+    for (var i = 3; i < 16; i++) {
+      _studyNumList.add(i.toString());
+    }
+
+    _idCtrl = widget.kStudyDocument != null
+        ? widget.kStudyDocument['studyNumber'].toString()
+        : '1';
+    _headerCtrl = TextEditingController(
+        text: widget.kStudyDocument != null
+            ? widget.kStudyDocument['header']
+            : '');
+    _subHeaderCtrl = TextEditingController(
+        text: widget.kStudyDocument != null
+            ? widget.kStudyDocument['subHeader']
+            : '');
+    _contentCtrl = TextEditingController(
+        text:
+            widget.kStudyDocument != null ? widget.kStudyDocument['desc'] : '');
+  }
+
+  @override
+  void dispose() {
+    _headerCtrl.dispose();
+    _subHeaderCtrl.dispose();
+    _contentCtrl.dispose();
+    _formKey = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: DropdownButtonFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Study No.*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                ),
+                value: _idCtrl,
+                icon: Icon(Icons.arrow_downward),
+                iconSize: 24,
+                elevation: 10,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                  fontSize: 17,
+                ),
+                onChanged: ((String newValue) {
+                  setState(() {
+                    _idCtrl = newValue;
+                  });
+                }),
+                items:
+                    _studyNumList.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: Colors.purple,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 15),
+              child: TextFormField(
+                controller: _headerCtrl,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Header cannot be empty !';
+                  }
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Header*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                ),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 17,
+                  letterSpacing: 0.9,
+                ),
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (value) {
+                  FocusScope.of(context).requestFocus(_subHeaderFocus);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: TextFormField(
+                controller: _subHeaderCtrl,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Sub Header cannot be empty !';
+                  }
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Sub Header*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                ),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 17,
+                  letterSpacing: 0.9,
+                ),
+                focusNode: _subHeaderFocus,
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (value) {
+                  FocusScope.of(context).requestFocus(_contentFocus);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: TextFormField(
+                controller: _contentCtrl,
+                validator: (value) {
+                  if (value.isEmpty) {
+                    return 'Content cannot be empty !';
+                  }
+                  return null;
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Content*',
+                  labelStyle: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
+                ),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 17,
+                  letterSpacing: 0.9,
+                ),
+                textInputAction: TextInputAction.newline,
+                maxLines: 10,
+                minLines: 4,
+                focusNode: _contentFocus,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 17.0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: RaisedButton.icon(
+                  onPressed: () async {
+                    if (_formKey.currentState.validate()) {
+                      // print('Save Study');
+                      bool _internet = await isInternetAvailable();
+                      if (_internet) {
+                        final KCircularProgress cp =
+                            KCircularProgress(ctx: context);
+                        cp.showCircularProgress();
+                        if (widget.isDelete) {
+                          print('Update Study');
+                          bool _isUpdate = false;
+                          var kDataMap = Map<String, dynamic>();
+                          if (_idCtrl !=
+                              widget.kStudyDocument['studyNumber'].toString()) {
+                            _isUpdate = true;
+                            kDataMap['studyNumber'] = int.parse(_idCtrl);
+                          }
+                          if (_headerCtrl.text !=
+                              widget.kStudyDocument['header']) {
+                            _isUpdate = true;
+                            kDataMap['header'] = _headerCtrl.text;
+                          }
+
+                          if (_subHeaderCtrl.text !=
+                              widget.kStudyDocument['subHeader']) {
+                            _isUpdate = true;
+                            kDataMap['subHeader'] = _subHeaderCtrl.text;
+                          }
+
+                          if (_contentCtrl.text !=
+                              widget.kStudyDocument['desc']) {
+                            _isUpdate = true;
+                            kDataMap['desc'] = _contentCtrl.text;
+                          }
+
+                          if (_isUpdate) {
+                            try {
+                              await widget.kStudyCollectionRef
+                                  .document(widget.kStudyDocument.documentID)
+                                  .updateData(kDataMap);
+                              cp.closeProgress();
+                              Navigator.pop(context, 'Update success..!!');
+                            } catch (e) {
+                              cp.closeProgress();
+                              Scaffold.of(context).showSnackBar(kSnackbar(
+                                  'Update unsuccessful. Please check !'));
+                            }
+                          } else {
+                            cp.closeProgress();
+                            Scaffold.of(context).showSnackBar(
+                                kSnackbar('Nothing to update..!!'));
+                          }
+                        } else {
+                          // print('New Study');
+                          var kDataMap = Map<String, dynamic>();
+                          kDataMap['studyNumber'] = int.parse(_idCtrl);
+                          kDataMap['header'] = _headerCtrl.text;
+                          kDataMap['subHeader'] = _subHeaderCtrl.text;
+                          kDataMap['desc'] = _contentCtrl.text;
+
+                          try {
+                            final DocumentReference _dR =
+                                await widget.kStudyCollectionRef.add(kDataMap);
+                            cp.closeProgress();
+                            if (_dR != null)
+                              Navigator.pop(context, 'New study added...!!');
+                            else
+                              Scaffold.of(context).showSnackBar(kSnackbar(
+                                  'New study unsuccessful. Please check !'));
+                          } catch (e) {
+                            cp.closeProgress();
+                            Scaffold.of(context).showSnackBar(kSnackbar(
+                                'New study unsuccessful. Please check !'));
+                          }
+                        }
+                      } else {
+                        kAlert(context, noInternetWidget);
+                      }
+                    }
+                  },
+                  label: Text(
+                    'Submit',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                    ),
+                  ),
+                  icon: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: const Icon(Icons.save, size: 28),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
+                  splashColor: Colors.yellow,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

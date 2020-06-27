@@ -20,28 +20,55 @@ Future<bool> isInternetAvailable() async {
   }
 }
 
-
-
 Future<void> kAlert(BuildContext ctx, Widget widg) async {
   return showDialog<void>(
-      context: ctx,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return widg;
-      },
-      );
+    context: ctx,
+    barrierDismissible: true,
+    builder: (BuildContext context) {
+      return widg;
+    },
+  );
 }
 
 Future<void> kDAlert(BuildContext ctx, Widget widg) async {
   return showDialog<void>(
-      context: ctx,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return widg;
-      },
-      );
+    context: ctx,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return widg;
+    },
+  );
 }
 
+class KCircularProgress {
+  final BuildContext ctx;
+  KCircularProgress({@required this.ctx});
+  bool _isProgressOn = false;
+
+  final _loadingWidget = Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: <Widget>[
+      CircularProgressIndicator(),
+    ],
+  );
+
+  Future<void> showCircularProgress() async {
+    return showDialog<void>(
+      context: this.ctx,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        this._isProgressOn = true;
+        return _loadingWidget;
+      },
+    );
+  }
+
+  void closeProgress(){
+    if(this._isProgressOn)
+    Navigator.of(this.ctx, rootNavigator: true).pop();
+  }
+}
 
 final noInternetWidget = AlertDialog(
   shape: RoundedRectangleBorder(
@@ -49,9 +76,12 @@ final noInternetWidget = AlertDialog(
   ),
   title: Center(
     child: ListTile(
-      leading: Icon(Icons.block,
-        color: Colors.black,),
-      title: Text('No internet...!!',
+      leading: Icon(
+        Icons.block,
+        color: Colors.black,
+      ),
+      title: Text(
+        'No internet...!!',
         style: TextStyle(
           color: Colors.black,
           fontWeight: FontWeight.w500,
@@ -65,7 +95,6 @@ final noInternetWidget = AlertDialog(
     fontWeight: FontWeight.w600,
   ),
   elevation: 15,
-
 );
 
 final wrongLogin = AlertDialog(
@@ -74,9 +103,9 @@ final wrongLogin = AlertDialog(
   ),
   title: Center(
     child: ListTile(
-      leading: Icon(Icons.report_problem,
-        color: Colors.black, size: 24),
-      title: Text('Login unsuccessful...!!',
+      leading: Icon(Icons.report_problem, color: Colors.black, size: 24),
+      title: Text(
+        'Login unsuccessful...!!',
         style: TextStyle(
           color: Colors.black,
           fontWeight: FontWeight.w500,
@@ -97,7 +126,6 @@ final wrongLogin = AlertDialog(
   // contentPadding: const EdgeInsets.all(5),
 );
 
-
 final wrongSignOut = AlertDialog(
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -105,8 +133,10 @@ final wrongSignOut = AlertDialog(
   title: Center(
     child: ListTile(
       leading: Icon(Icons.report_problem, //report_problem priority_high
-        color: Colors.black, size: 24),
-      title: Text('Sign out unsuccessful...!!',
+          color: Colors.black,
+          size: 24),
+      title: Text(
+        'Sign out unsuccessful...!!',
         style: TextStyle(
           color: Colors.black,
           fontWeight: FontWeight.w500,
@@ -128,15 +158,15 @@ final wrongSignOut = AlertDialog(
 );
 
 Widget kSnackbar(String msg) => SnackBar(
-  content: Text(
-    msg,
-    style: TextStyle(
-      color: Colors.black,
-      fontSize: 20,
-      // fontWeight: FontWeight.w500,
-    ),
-    textAlign: TextAlign.center,
-  ),
-  backgroundColor: Colors.lightBlue,
-  duration: Duration(seconds: 4),
-);
+      content: Text(
+        msg,
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 20,
+          // fontWeight: FontWeight.w500,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      backgroundColor: Colors.lightBlue,
+      duration: Duration(seconds: 4),
+    );
