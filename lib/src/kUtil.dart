@@ -43,7 +43,7 @@ Future<void> kDAlert(BuildContext ctx, Widget widg) async {
 class KCircularProgress {
   final BuildContext ctx;
   KCircularProgress({@required this.ctx});
-  bool _isProgressOn = false;
+  // bool _isProgressOn = false;
 
   final _loadingWidget = Column(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -58,14 +58,14 @@ class KCircularProgress {
       context: this.ctx,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        this._isProgressOn = true;
+        // this._isProgressOn = true;
         return _loadingWidget;
       },
     );
   }
 
   void closeProgress(){
-    if(this._isProgressOn)
+    // if(this._isProgressOn)
     Navigator.of(this.ctx, rootNavigator: true).pop();
   }
 }
@@ -157,7 +157,7 @@ final wrongSignOut = AlertDialog(
   // contentPadding: const EdgeInsets.all(5),
 );
 
-Widget kSnackbar(String msg) => SnackBar(
+SnackBar kSnackbar(String msg) => SnackBar(
       content: Text(
         msg,
         style: TextStyle(

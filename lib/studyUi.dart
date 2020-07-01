@@ -439,6 +439,10 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
                 validator: (value) {
                   if (value.isEmpty) {
                     return 'Class ID cannot be empty !';
+                  }else if(value.split(' ').length > 1){
+                    return 'Class ID cannot have spaces !';
+                  }else if(value != value.trim()){
+                    return 'Class ID cannot have spaces !';
                   }
                   return null;
                 },
@@ -471,6 +475,12 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
                 validator: (value) {
                   if (value.isEmpty) {
                     return 'Class Password cannot be empty !';
+                  }else if(value.split(' ').length > 1){
+                    return 'Class Password cannot have spaces !';
+                  }else if(value != value.trim()){
+                    return 'Class Password cannot have spaces !';
+                  }else if(value != value.toLowerCase()){
+                    return 'Class Password have to be lower case !';
                   }
                   return null;
                 },
