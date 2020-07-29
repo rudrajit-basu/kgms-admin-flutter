@@ -231,13 +231,13 @@ class KgmsEventsFSDAppBar extends StatelessWidget
               cp.showCircularProgress();
               try {
                 await kEventsCollectionRef.document(docID).delete();
-                cp.showCircularProgress();
+                cp.closeProgress();
                 Navigator.pop(context);
                 Navigator.pop(context, 'Event deleted successfully..!!');
               } catch (e) {
                 // _scaffoldKey2.currentState.showSnackBar(
                 //     kSnackbar('Delete unsuccessful. Please check.'));
-                cp.showCircularProgress();
+                cp.closeProgress();
                 Scaffold.of(context).showSnackBar(
                     kSnackbar('Delete unsuccessful. Please check.'));
               }

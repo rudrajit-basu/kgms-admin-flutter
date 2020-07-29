@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'self.dart';
+import 'studyMediaItemsUi.dart';
 
 final kClassesCollectionRef = Firestore.instance.collection('kgms-classes');
 
@@ -157,6 +158,7 @@ class KgmsStudyClassBody extends StatelessWidget {
               // print('kgms class pressed !');
               _KgmsClassCurrentDoc.docId = document.documentID;
               _KgmsClassCurrentDoc.className = document['className'];
+              _KgmsClassCurrentDoc.classId = document['classId'];
 
               Navigator.push(
                 context,
@@ -324,7 +326,7 @@ class KgmsClassCredentialAppBar extends StatelessWidget
                 Scaffold.of(context)
                     .showSnackBar(kSnackbar('Cannot delete new class.'));
               } else {
-                print('Delete Class Doc id: ${kClassDocument.documentID}');
+                //print('Delete Class Doc id: ${kClassDocument.documentID}');
                 kDAlert(
                     context, _deleteAlertW(context, kClassDocument.documentID));
               }
@@ -354,11 +356,9 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
   TextEditingController _classNameCtrl;
   TextEditingController _classIDCtrl;
   TextEditingController _classPasswordCtrl;
-  TextEditingController _imgAlbumIdCtrl;
 
   final _classIDFocus = FocusNode();
   final _classPasswordFocus = FocusNode();
-  final _imgAlbumIdFocus = FocusNode();
 
   @override
   void initState() {
@@ -376,10 +376,6 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
         text: widget.kClassDocument != null
             ? widget.kClassDocument['classPassword']
             : '');
-    _imgAlbumIdCtrl = TextEditingController(
-        text: widget.kClassDocument != null
-            ? widget.kClassDocument['imgAlbumId']
-            : '');
   }
 
   @override
@@ -387,7 +383,6 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
     _classNameCtrl.dispose();
     _classIDCtrl.dispose();
     _classPasswordCtrl.dispose();
-    _imgAlbumIdCtrl.dispose();
     _formKey = null;
     super.dispose();
   }
@@ -439,9 +434,9 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
                 validator: (value) {
                   if (value.isEmpty) {
                     return 'Class ID cannot be empty !';
-                  }else if(value.split(' ').length > 1){
+                  } else if (value.split(' ').length > 1) {
                     return 'Class ID cannot have spaces !';
-                  }else if(value != value.trim()){
+                  } else if (value != value.trim()) {
                     return 'Class ID cannot have spaces !';
                   }
                   return null;
@@ -475,11 +470,11 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
                 validator: (value) {
                   if (value.isEmpty) {
                     return 'Class Password cannot be empty !';
-                  }else if(value.split(' ').length > 1){
+                  } else if (value.split(' ').length > 1) {
                     return 'Class Password cannot have spaces !';
-                  }else if(value != value.trim()){
+                  } else if (value != value.trim()) {
                     return 'Class Password cannot have spaces !';
-                  }else if(value != value.toLowerCase()){
+                  } else if (value != value.toLowerCase()) {
                     return 'Class Password have to be lower case !';
                   }
                   return null;
@@ -500,38 +495,6 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
                   letterSpacing: 0.9,
                 ),
                 focusNode: _classPasswordFocus,
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_imgAlbumIdFocus);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: TextFormField(
-                controller: _imgAlbumIdCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Img Album ID cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Img Album ID*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
-                ),
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                focusNode: _imgAlbumIdFocus,
               ),
             ),
             Padding(
@@ -569,12 +532,6 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
                             kDataMap['classPassword'] = _classPasswordCtrl.text;
                           }
 
-                          if (_imgAlbumIdCtrl.text !=
-                              widget.kClassDocument['imgAlbumId']) {
-                            _isUpdate = true;
-                            kDataMap['imgAlbumId'] = _imgAlbumIdCtrl.text;
-                          }
-
                           if (_isUpdate) {
                             try {
                               await kClassesCollectionRef
@@ -598,7 +555,6 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
                           kDataMap['className'] = _classNameCtrl.text;
                           kDataMap['classId'] = _classIDCtrl.text;
                           kDataMap['classPassword'] = _classPasswordCtrl.text;
-                          kDataMap['imgAlbumId'] = _imgAlbumIdCtrl.text;
 
                           try {
                             final DocumentReference _dR =
@@ -693,6 +649,7 @@ class KgmsClassCredential extends StatelessWidget {
 class _KgmsClassCurrentDoc {
   static String docId;
   static String className;
+  static String classId;
 }
 
 class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -732,7 +689,7 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: const Icon(Icons.add, size: 30),
             tooltip: 'add new study',
             onPressed: () {
-              print('add new study');
+              //print('add new study');
               if (totalStudies.getTotalKlist() < 16) {
                 _kStudyNavigation(
                     context,
@@ -744,6 +701,21 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Scaffold.of(context)
                     .showSnackBar(kSnackbar('Max 16 Studies Allowed.'));
               }
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: IconButton(
+            icon: const Icon(Icons.add_photo_alternate, size: 30),
+            tooltip: 'add new media',
+            onPressed: () {
+              // print('add new media');
+              _kStudyNavigation(
+                  context,
+                  StudyMedia(
+                      className: _KgmsClassCurrentDoc.className,
+                      classId: _KgmsClassCurrentDoc.classId));
             },
           ),
         ),
@@ -1026,12 +998,12 @@ class KgmsStudyContentAppBar extends StatelessWidget
             iconSize: 30,
             tooltip: 'delete study',
             onPressed: () {
-              print('delete study');
+              //print('delete study');
               if (!isDelete) {
                 Scaffold.of(context)
                     .showSnackBar(kSnackbar('Cannot delete new study.'));
               } else {
-                print('Delete Class Doc id: ${kStudyDocument.documentID}');
+                //print('Delete Class Doc id: ${kStudyDocument.documentID}');
                 kDAlert(
                     context, _deleteAlertW(context, kStudyDocument.documentID));
               }
@@ -1262,7 +1234,7 @@ class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
                             KCircularProgress(ctx: context);
                         cp.showCircularProgress();
                         if (widget.isDelete) {
-                          print('Update Study');
+                          //print('Update Study');
                           bool _isUpdate = false;
                           var kDataMap = Map<String, dynamic>();
                           if (_idCtrl !=

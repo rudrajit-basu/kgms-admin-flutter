@@ -35,6 +35,24 @@ Future<void> kDAlert(BuildContext ctx, Widget widg) async {
     context: ctx,
     barrierDismissible: false,
     builder: (BuildContext context) {
+      return GestureDetector(
+        onTap: () async {
+          FocusScopeNode currentFocus = FocusScope.of(context);
+          if (!currentFocus.hasPrimaryFocus) {
+            currentFocus.unfocus();
+          }
+        },
+        child: widg,
+      );
+    },
+  );
+}
+
+Future<void> kDDAlert(BuildContext ctx, Widget widg) async {
+  return showDialog<void>(
+    context: ctx,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
       return widg;
     },
   );
@@ -43,7 +61,6 @@ Future<void> kDAlert(BuildContext ctx, Widget widg) async {
 class KCircularProgress {
   final BuildContext ctx;
   KCircularProgress({@required this.ctx});
-  // bool _isProgressOn = false;
 
   final _loadingWidget = Column(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -58,14 +75,12 @@ class KCircularProgress {
       context: this.ctx,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        // this._isProgressOn = true;
         return _loadingWidget;
       },
     );
   }
 
-  void closeProgress(){
-    // if(this._isProgressOn)
+  void closeProgress() {
     Navigator.of(this.ctx, rootNavigator: true).pop();
   }
 }
@@ -168,5 +183,5 @@ SnackBar kSnackbar(String msg) => SnackBar(
         textAlign: TextAlign.center,
       ),
       backgroundColor: Colors.lightBlue,
-      duration: Duration(seconds: 4),
+      duration: Duration(seconds: 3),
     );

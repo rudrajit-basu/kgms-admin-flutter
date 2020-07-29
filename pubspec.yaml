@@ -11,7 +11,7 @@ description: Khela Ghar Montessory School Admin project.
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.1+83
+version: 1.0.2+01
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
@@ -25,6 +25,12 @@ dependencies:
   email_validator: '^1.0.4'
   shared_preferences: ^0.5.7
   http: 0.12.1
+  firebase_storage: ^3.1.6
+  file_picker: ^1.12.0
+  cached_network_image: ^2.2.0+1
+  provider: ^4.3.1
+  # video_player: ^0.10.11+2
+  # chewie: ^0.9.10
   # firebase_core: ^0.4.4+3
   # firebase_analytics: ^5.0.2
   # The following adds the Cupertino Icons font to your application.
