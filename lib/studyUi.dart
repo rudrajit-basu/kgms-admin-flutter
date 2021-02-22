@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'self.dart';
 import 'studyMediaItemsUi.dart';
+import 'studyVideoItemsUi.dart';
 
-final kClassesCollectionRef = Firestore.instance.collection('kgms-classes');
+//final kClassesCollectionRef = Firestore.instance.collection('kgms-classes');
+final kClassesCollectionRef =
+    FirebaseFirestore.instance.collection('kgms-classes');
 
 // class StudyClassesModel {
 //   final String tagNo;
@@ -53,7 +56,7 @@ class KgmsStudyClassAppBar extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text('Study Classes'),
+      title: Text('Kgms Classes'),
       actions: <Widget>[
         Padding(
           padding: const EdgeInsets.only(right: 10),
@@ -138,7 +141,8 @@ class KgmsStudyClassBody extends StatelessWidget {
               ),
             ),
             trailing: IconButton(
-              icon: Icon(Icons.lock_open),
+              //icon: Icon(Icons.lock_open),
+              icon: Icon(Icons.settings_sharp),
               tooltip: 'change credentials',
               onPressed: () {
                 // print('change credentials pressed !');
@@ -156,14 +160,21 @@ class KgmsStudyClassBody extends StatelessWidget {
             ),
             onTap: () {
               // print('kgms class pressed !');
-              _KgmsClassCurrentDoc.docId = document.documentID;
+              //_KgmsClassCurrentDoc.docId = document.documentID;
+              _KgmsClassCurrentDoc.docId = document.id;
               _KgmsClassCurrentDoc.className = document['className'];
               _KgmsClassCurrentDoc.classId = document['classId'];
 
+              //Navigator.push(
+              //  context,
+              //  MaterialPageRoute(
+              //    builder: (context) => KgmsStudy(),
+              //  ),
+              //);
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => KgmsStudy(),
+                  builder: (context) => KgmsClassStudyMain(),
                 ),
               );
             }),
@@ -204,11 +215,12 @@ class KgmsStudyClassBody extends StatelessWidget {
                 return _loadingTile('Loading....');
               default:
                 {
-                  totalClasses.setTotalKList(snapshot.data.documents.length);
+                  //totalClasses.setTotalKList(snapshot.data.documents.length);
+                  totalClasses.setTotalKList(snapshot.data.size);
                   return ListView.builder(
-                    itemCount: snapshot.data.documents.length,
+                    itemCount: snapshot.data.size,
                     itemBuilder: (context, index) => _studyClassesTile(
-                        context, snapshot.data.documents[index], index),
+                        context, snapshot.data.docs[index], index),
                   );
                 }
             }
@@ -228,6 +240,117 @@ class KgmsClassStudy extends StatelessWidget {
     return Scaffold(
       appBar: KgmsStudyClassAppBar(totalClasses: _totalClasses),
       body: KgmsStudyClassBody(totalClasses: _totalClasses),
+    );
+  }
+}
+
+class KgmsClassStudyMain extends StatelessWidget {
+  KgmsClassStudyMain({Key key}) : super(key: key);
+
+  Widget _buildMainButtons(BuildContext context, String s, StatelessWidget slw,
+          IconData ic, bool checkInternet) =>
+      FloatingActionButton.extended(
+        label: Text(
+          '$s',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
+        ),
+        icon: Icon(
+          ic,
+          color: Colors.blue,
+          size: 25,
+        ),
+        splashColor: Colors.green,
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+        ),
+        onPressed: () async {
+          if (slw != null) {
+            if (checkInternet) {
+              bool _internet = await isInternetAvailable();
+              if (_internet) {
+                Navigator.of(context).push(_createRoute(slw));
+              } else {
+                kAlert(context, noInternetWidget);
+              }
+            } else {
+              Navigator.of(context).push(_createRoute(slw));
+            }
+          }
+        },
+        heroTag: '$s',
+      );
+
+  List<FloatingActionButton> _buildButtonList(BuildContext ctx) {
+    List<FloatingActionButton> fabList = new List();
+    fabList.add(_buildMainButtons(
+        ctx, 'Study', KgmsStudy(), Icons.menu_book_rounded, true));
+    fabList.add(_buildMainButtons(
+        ctx,
+        'Image',
+        StudyMedia(
+            className: _KgmsClassCurrentDoc.className,
+            classId: _KgmsClassCurrentDoc.classId),
+        Icons.add_photo_alternate,
+        true));
+    fabList.add(_buildMainButtons(
+        ctx,
+        'Video',
+        StudyVideo(
+            className: _KgmsClassCurrentDoc.className,
+            classId: _KgmsClassCurrentDoc.classId),
+        Icons.ondemand_video_rounded,
+        true));
+    fabList
+        .add(_buildMainButtons(ctx, 'Diary', null, Icons.book_rounded, true));
+    //fabList.add(
+    //    _buildMainButtons(ctx, 'Study', KgmsClassStudy(), Icons.face, true));
+    // fabList.add(_buildMainButtons(ctx, 'Accounts', null, Icons.business));
+    return fabList;
+  }
+
+  Route _createRoute(StatelessWidget slw) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => slw,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var begin = Offset(0.0, 1.0);
+        var end = Offset.zero;
+        var curve = Curves.ease;
+        // var curve = Curves.easeInOutSine;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Class : ${_KgmsClassCurrentDoc.className}'),
+      ),
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          return GridView.count(
+            primary: true,
+            padding: const EdgeInsets.all(15),
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            crossAxisCount: orientation == Orientation.portrait ? 2 : 3,
+            children: _buildButtonList(context),
+          );
+        },
+      ),
     );
   }
 }
@@ -265,21 +388,37 @@ class KgmsClassCredentialAppBar extends StatelessWidget
               final KCircularProgress cp = KCircularProgress(ctx: context);
               cp.showCircularProgress();
               try {
+                //QuerySnapshot snapshot = await kClassesCollectionRef
+                //    .document(docID)
+                //    .collection('kgms-study')
+                //    .getDocuments();
                 QuerySnapshot snapshot = await kClassesCollectionRef
-                    .document(docID)
+                    .doc(docID)
                     .collection('kgms-study')
-                    .getDocuments();
+                    .get();
+                //.getDocuments();
 
-                for (DocumentSnapshot ds in snapshot.documents) {
+                for (QueryDocumentSnapshot ds in snapshot.docs) {
                   // print('DocID => ${ds.documentID}');
+                  //await kClassesCollectionRef
+                  //    .document(docID)
+                  //    .collection('kgms-study')
+                  //    .document(ds.documentID)
+                  //    .delete();
+                  //await kClassesCollectionRef
+                  //    .document(docID)
+                  //    .collection('kgms-study')
+                  //    .document(ds.id)
+                  //    .delete();
                   await kClassesCollectionRef
-                      .document(docID)
+                      .doc(docID)
                       .collection('kgms-study')
-                      .document(ds.documentID)
+                      .doc(ds.id)
                       .delete();
                 }
 
-                await kClassesCollectionRef.document(docID).delete();
+                //await kClassesCollectionRef.document(docID).delete();
+                await kClassesCollectionRef.doc(docID).delete();
                 cp.closeProgress();
                 Navigator.pop(context);
                 Navigator.pop(context, 'Class deleted successfully..!!');
@@ -327,8 +466,9 @@ class KgmsClassCredentialAppBar extends StatelessWidget
                     .showSnackBar(kSnackbar('Cannot delete new class.'));
               } else {
                 //print('Delete Class Doc id: ${kClassDocument.documentID}');
-                kDAlert(
-                    context, _deleteAlertW(context, kClassDocument.documentID));
+                //kDAlert(
+                //    context, _deleteAlertW(context, kClassDocument.documentID));
+                kDAlert(context, _deleteAlertW(context, kClassDocument.id));
               }
             },
           ),
@@ -534,9 +674,12 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
 
                           if (_isUpdate) {
                             try {
+                              //await kClassesCollectionRef
+                              //    .document(widget.kClassDocument.documentID)
+                              //    .updateData(kDataMap);
                               await kClassesCollectionRef
-                                  .document(widget.kClassDocument.documentID)
-                                  .updateData(kDataMap);
+                                  .doc(widget.kClassDocument.id)
+                                  .update(kDataMap);
                               cp.closeProgress();
                               Navigator.pop(context, 'Update success..!!');
                             } catch (e) {
@@ -681,10 +824,17 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text('Study : ${_KgmsClassCurrentDoc.className}'),
+      title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Text('Study :'),
+            Text('${_KgmsClassCurrentDoc.className}',
+                style: TextStyle(fontSize: 17.5))
+          ]),
       actions: <Widget>[
         Padding(
-          padding: const EdgeInsets.only(right: 10),
+          padding: const EdgeInsets.only(right: 7),
           child: IconButton(
             icon: const Icon(Icons.add, size: 30),
             tooltip: 'add new study',
@@ -705,7 +855,7 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(right: 10),
+          padding: const EdgeInsets.only(right: 7),
           child: IconButton(
             icon: const Icon(Icons.add_photo_alternate, size: 30),
             tooltip: 'add new media',
@@ -714,6 +864,21 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
               _kStudyNavigation(
                   context,
                   StudyMedia(
+                      className: _KgmsClassCurrentDoc.className,
+                      classId: _KgmsClassCurrentDoc.classId));
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: IconButton(
+            icon: const Icon(Icons.ondemand_video_rounded, size: 28),
+            tooltip: 'add new video',
+            onPressed: () {
+              //print('add new video');
+              _kStudyNavigation(
+                  context,
+                  StudyVideo(
                       className: _KgmsClassCurrentDoc.className,
                       classId: _KgmsClassCurrentDoc.classId));
             },
@@ -838,12 +1003,17 @@ class KgmsStudyBody extends StatelessWidget {
                 return _loadingTile('Loading....');
               default:
                 {
-                  totalStudies.setTotalKList(snapshot.data.documents.length);
-                  return ListView.builder(
-                    itemCount: snapshot.data.documents.length,
-                    itemBuilder: (context, index) =>
-                        _studyTile(context, snapshot.data.documents[index]),
-                  );
+                  //totalStudies.setTotalKList(snapshot.data.documents.length);
+                  totalStudies.setTotalKList(snapshot.data.size);
+                  if (snapshot.data.size > 0) {
+                    return ListView.builder(
+                      itemCount: snapshot.data.size,
+                      itemBuilder: (context, index) =>
+                          _studyTile(context, snapshot.data.docs[index]),
+                    );
+                  } else {
+                    return _loadingTile('No Study !');
+                  }
                 }
             }
         }
@@ -855,8 +1025,11 @@ class KgmsStudyBody extends StatelessWidget {
 class KgmsStudy extends StatelessWidget {
   KgmsStudy({Key key}) : super(key: key);
 
+  //final kStudyCollectionRef = kClassesCollectionRef
+  //    .document(_KgmsClassCurrentDoc.docId)
+  //    .collection('kgms-study');
   final kStudyCollectionRef = kClassesCollectionRef
-      .document(_KgmsClassCurrentDoc.docId)
+      .doc(_KgmsClassCurrentDoc.docId)
       .collection('kgms-study');
 
   final _totalStudies = _TotalKlist();
@@ -954,7 +1127,8 @@ class KgmsStudyContentAppBar extends StatelessWidget
               final KCircularProgress cp = KCircularProgress(ctx: context);
               cp.showCircularProgress();
               try {
-                await kStudyCollectionRef.document(docID).delete();
+                //await kStudyCollectionRef.document(docID).delete();
+                await kStudyCollectionRef.doc(docID).delete();
                 cp.closeProgress();
                 Navigator.pop(context);
                 Navigator.pop(context, 'Study deleted successfully..!!');
@@ -1004,8 +1178,9 @@ class KgmsStudyContentAppBar extends StatelessWidget
                     .showSnackBar(kSnackbar('Cannot delete new study.'));
               } else {
                 //print('Delete Class Doc id: ${kStudyDocument.documentID}');
-                kDAlert(
-                    context, _deleteAlertW(context, kStudyDocument.documentID));
+                //kDAlert(
+                //    context, _deleteAlertW(context, kStudyDocument.documentID));
+                kDAlert(context, _deleteAlertW(context, kStudyDocument.id));
               }
             },
           ),
@@ -1262,9 +1437,12 @@ class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
 
                           if (_isUpdate) {
                             try {
+                              //await widget.kStudyCollectionRef
+                              //    .document(widget.kStudyDocument.documentID)
+                              //    .updateData(kDataMap);
                               await widget.kStudyCollectionRef
-                                  .document(widget.kStudyDocument.documentID)
-                                  .updateData(kDataMap);
+                                  .doc(widget.kStudyDocument.id)
+                                  .update(kDataMap);
                               cp.closeProgress();
                               Navigator.pop(context, 'Update success..!!');
                             } catch (e) {

@@ -1,13 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'eventsUi.dart';
 import 'studyUi.dart';
 import 'self.dart';
+import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() => runApp(KgmsApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(KgmsApp());
+}
 
 class KgmsApp extends StatelessWidget {
+  // Create the initialization Future outside of `build`:
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+
+  FutureBuilder _loadMainPage() => FutureBuilder(
+        future: _initialization,
+        builder: (context, snapshot) {
+          if (snapshot == null) {
+            return Center(
+              child: Text(
+                'No internet connection !',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Init Error !',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.done) {
+            return KgmsLoginPage();
+          }
+
+          return Center(
+            child: Text(
+              'Loading.... ',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          );
+        },
+      );
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,7 +65,7 @@ class KgmsApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.yellow,
       ),
-      home: KgmsLoginPage(),
+      home: _loadMainPage(),
     );
   }
 }
@@ -83,22 +133,22 @@ class _KgmsLoginState extends State<KgmsLogin> {
   @override
   void initState() {
     super.initState();
-    // fServ.getCurrentUser().then((uid) {
-    //   if (uid != null) {
-    //     _loginNavigate(context, KgmsMain(userN: uid));
-    //   } else {
-    //     SharedPreferences.getInstance().then((prefs) {
-    //       this.setState(() {
-    //         _uidCtrl.text = prefs.getString('kUserName') ?? '';
-    //       });
-    //     });
-    //   }
-    // });
-    SharedPreferences.getInstance().then((prefs) {
-      this.setState(() {
-        _uidCtrl.text = prefs.getString('kUserName') ?? '';
-      });
+    fServ.getCurrentUser().then((uid) {
+      if (uid != null) {
+        _loginNavigate(context, KgmsMain(userN: uid));
+      } else {
+        cacheServ.getUserName().then((uName) {
+          this.setState(() {
+            _uidCtrl.text = uName;
+          });
+        });
+      }
     });
+    //SharedPreferences.getInstance().then((prefs) {
+    //  this.setState(() {
+    //    _uidCtrl.text = prefs.getString('kUserName') ?? '';
+    //  });
+    //});
   }
 
   @override
@@ -117,10 +167,15 @@ class _KgmsLoginState extends State<KgmsLogin> {
         builder: (context) => kgm,
       ),
     );
-    final prefs = await SharedPreferences.getInstance();
-    this.setState(() {
-      _uidCtrl.text = prefs.getString('kUserName') ?? '';
+    cacheServ.getUserName().then((uName) {
+      this.setState(() {
+        _uidCtrl.text = uName;
+      });
     });
+    //final prefs = await SharedPreferences.getInstance();
+    //this.setState(() {
+    //  _uidCtrl.text = prefs.getString('kUserName') ?? '';
+    //});
   }
 
   @override
@@ -225,8 +280,11 @@ class _KgmsLoginState extends State<KgmsLogin> {
                         bool _signIn =
                             await fServ.signIn(_uidCtrl.text, _passwdCtrl.text);
                         if (_signIn) {
-                          SharedPreferences.getInstance().then((prefs) {
-                            prefs.setString('kUserName', _uidCtrl.text);
+                          //SharedPreferences.getInstance().then((prefs) {
+                          //  prefs.setString('kUserName', _uidCtrl.text);
+                          //});
+                          cacheServ.setUserName(_uidCtrl.text).then((res) {
+                            print('Set user name result --> $res');
                           });
                           String _userEmail = await fServ.getCurrentUser();
                           cp.closeProgress();
@@ -323,7 +381,7 @@ class KgmsMain extends StatelessWidget {
     fabList
         .add(_buildMainButtons(ctx, 'Events', KgmsEvents(), Icons.event, true));
     fabList.add(
-        _buildMainButtons(ctx, 'Study', KgmsClassStudy(), Icons.face, true));
+        _buildMainButtons(ctx, 'Class', KgmsClassStudy(), Icons.face, true));
     // fabList.add(_buildMainButtons(ctx, 'Accounts', null, Icons.business));
     return fabList;
   }

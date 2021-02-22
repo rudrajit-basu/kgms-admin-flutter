@@ -12,8 +12,10 @@ import 'package:provider/provider.dart';
 //import 'package:video_player/video_player.dart';
 //import 'package:chewie/chewie.dart';
 
-final StorageReference storageReference =
-    FirebaseStorage().ref().child('kgms-images');
+//final StorageReference storageReference =
+//    FirebaseStorage().ref().child('kgms-images');
+final Reference storageReference =
+    FirebaseStorage.instance.ref().child('kgms-images');
 
 class StudyMediaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String className;
@@ -28,7 +30,7 @@ class StudyMediaAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text('Media : $className'),
+      title: Text('Image : $className'),
       actions: <Widget>[
         Padding(
           padding: const EdgeInsets.only(right: 10),
@@ -76,6 +78,18 @@ class MediaItemsModel with ChangeNotifier {
 
   List<String> get mediaItems => _mediaItems;
 
+  bool _isWaiting = true;
+
+  bool get isWaiting => _isWaiting;
+
+  bool _isError = false;
+
+  bool get isError => _isError;
+
+  String _errorMsg = '';
+
+  String get errorMsg => _errorMsg;
+
   MediaItemsModel(String subDir) {
     _getStorageData(subDir);
   }
@@ -93,11 +107,20 @@ class MediaItemsModel with ChangeNotifier {
       //print('result = $outputList');
       if (outputList != null) {
         outputList.forEach((item) => _mediaItems.add(item));
-        notifyListeners();
       }
+      _isError = false;
+      _errorMsg = '';
     } on PlatformException catch (e) {
       print('error in storage channel = ${e.message}');
+      _isError = true;
+      _errorMsg = 'platform exception';
+    } on FormatException catch (e) {
+      print('error in json parse = ${e.message}');
+      _isError = true;
+      _errorMsg = 'json exception';
     }
+    _isWaiting = false;
+    notifyListeners();
   }
 
   void addItem(String item) {
@@ -232,8 +255,14 @@ class StudyMediaBody extends StatelessWidget {
               ),
             ),
             subtitle: Padding(
-              padding: const EdgeInsets.only(top: 6.0),
-              child: Text('type: $fileType'),
+              padding: const EdgeInsets.only(top: 5.0),
+              child: Text(
+                '<type - $fileType>',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
             ),
             leading: CircleAvatar(
               child: Text(
@@ -282,17 +311,28 @@ class StudyMediaBody extends StatelessWidget {
         if (snapshot.mediaItems == null) {
           return _loadingTile('Something went wrong. Try later..!! 2');
         } else {
-          if (snapshot.mediaItems.isEmpty) {
-            return _loadingTile('No Media items !');
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.mediaItems.length,
-              itemBuilder: (context, index) => _studyClassMediaTile(
-                  context,
-                  snapshot.mediaItems[index],
-                  getFileType(extension(snapshot.mediaItems[index])),
-                  index),
-            );
+          switch (snapshot.isWaiting) {
+            case true:
+              return _loadingTile('Loading....');
+            default:
+              {
+                if (snapshot.isError) {
+                  return _loadingTile(snapshot.errorMsg);
+                } else {
+                  if (snapshot.mediaItems.isEmpty) {
+                    return _loadingTile('No Media items !');
+                  } else {
+                    return ListView.builder(
+                      itemCount: snapshot.mediaItems.length,
+                      itemBuilder: (context, index) => _studyClassMediaTile(
+                          context,
+                          snapshot.mediaItems[index],
+                          getFileType(extension(snapshot.mediaItems[index])),
+                          index),
+                    );
+                  }
+                }
+              }
           }
         }
       }
@@ -392,8 +432,11 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
         ],
       ),
       actions: <Widget>[
-        RaisedButton(
+        ElevatedButton(
           onPressed: () async {
+            setState(() {
+              _uploadIssue = "Please wait...";
+            });
             String filePath =
                 await FilePicker.getFilePath(type: FileType.image);
 
@@ -409,95 +452,155 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
                 _fullFilePath = null;
                 _fileNameCtrl.text = "None";
                 _filePathExt = "";
+                _uploadIssue = "";
               });
             }
           },
-          child: const Text('Select File'),
+          child: const Text('Select File',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              )),
           // splashColor: Colors.yellow,
-          color: Colors.green,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
+          //color: Colors.green,
+          //shape: RoundedRectangleBorder(
+          //  borderRadius: BorderRadius.all(Radius.circular(8)),
+          //),
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+            shape: MaterialStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            )),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          child: RaisedButton(
-            onPressed: () async {
-              if (_fileNameCtrl.text.isEmpty ||
-                  _fileNameCtrl.text.toLowerCase() == "none") {
+        ElevatedButton(
+          onPressed: () async {
+            if (_fileNameCtrl.text.isEmpty ||
+                _fileNameCtrl.text.toLowerCase() == "none") {
+              setState(() {
+                _uploadIssue = "** file name cannot be empty";
+              });
+            } else {
+              if ((_fileNameCtrl.text.split(' ').length > 1) ||
+                  (_fileNameCtrl.text != _fileNameCtrl.text.trim())) {
                 setState(() {
-                  _uploadIssue = "** file name cannot be empty";
+                  _uploadIssue = "** file name cannot have spaces";
                 });
               } else {
-                if ((_fileNameCtrl.text.split(' ').length > 1) ||
-                    (_fileNameCtrl.text != _fileNameCtrl.text.trim())) {
-                  setState(() {
-                    _uploadIssue = "** file name cannot have spaces";
-                  });
-                } else {
-                  // print('go for upload');
-                  setState(() {
-                    _uploadIssue = "";
-                  });
-                  if (_fullFilePath != null) {
-                    bool _internet = await isInternetAvailable();
-                    if (_internet) {
-                      final KCircularProgress cp =
-                          KCircularProgress(ctx: context);
-                      cp.showCircularProgress();
-                      final File mediaItem = File(_fullFilePath);
-                      final String fullFileName =
-                          _fileNameCtrl.text + _filePathExt;
-                      StorageTaskSnapshot snapshot = await storageReference
-                          .child(widget.classId)
-                          .child(fullFileName)
-                          .putFile(mediaItem)
-                          .onComplete;
-                      if (snapshot.error == null) {
-                        widget.onSuccessfulUpload(fullFileName);
-                        cp.closeProgress();
-                        //print('upload successful !');
-                        Navigator.of(context).pop();
-                      } else {
-                        cp.closeProgress();
-                        setState(() {
-                          _uploadIssue = "** upload error";
-                        });
-                      }
-                    } else {
-                      kAlert(context, noInternetWidget);
-                    }
-                  } else {
+                // print('go for upload');
+                setState(() {
+                  _uploadIssue = "";
+                });
+                if (_fullFilePath != null) {
+                  bool _internet = await isInternetAvailable();
+                  if (_internet) {
+                    final KCircularProgress cp =
+                        KCircularProgress(ctx: context);
+                    cp.showCircularProgress();
+                    final File mediaItem = File(_fullFilePath);
+                    final String fullFileName =
+                        _fileNameCtrl.text + _filePathExt;
+                    final uploadStream = storageReference
+                        .child(widget.classId)
+                        .child(fullFileName)
+                        .putFile(mediaItem)
+                        .asStream();
                     setState(() {
-                      _uploadIssue = "** please select a file";
+                      _uploadIssue = "uploading...";
                     });
+                    final subscription = uploadStream.listen(
+                      (data) {
+                        if (data.state == TaskState.running) {
+                          //int _bytesTrans =
+                          //((data.bytesTransferred / data.totalBytes) *
+                          //        100)
+                          //    .toInt();
+                          //setState(() {
+                          //  _uploadIssue = "uploading ($_bytesTrans%)";
+                          //});
+                        } else if (data.state == TaskState.error) {
+                          cp.closeProgress();
+                          setState(() {
+                            _uploadIssue = "** upload error";
+                          });
+                        } else if (data.state == TaskState.success) {
+                          widget.onSuccessfulUpload(fullFileName);
+                          cp.closeProgress();
+                          Navigator.of(context).pop();
+                        } else if (data.state == TaskState.canceled) {
+                          cp.closeProgress();
+                          setState(() {
+                            _uploadIssue = "** upload canceled";
+                          });
+                        } else if (data.state == TaskState.paused) {
+                          cp.closeProgress();
+                          setState(() {
+                            _uploadIssue = "** upload paused";
+                          });
+                        }
+                      },
+                      onError: (err) {
+                        print('Error during upload --> $err');
+                      },
+                      cancelOnError: false,
+                      onDone: () {
+                        print('upload stream done !');
+                      },
+                    );
+                  } else {
+                    kAlert(context, noInternetWidget);
                   }
+                } else {
+                  setState(() {
+                    _uploadIssue = "** please select a file";
+                  });
                 }
               }
-            },
-            child: const Text('Upload'),
-            // splashColor: Colors.yellow,
-            color: Colors.green,
-            shape: RoundedRectangleBorder(
+            }
+          },
+          child: const Text('Upload',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              )),
+          // splashColor: Colors.yellow,
+          //color: Colors.green,
+          //shape: RoundedRectangleBorder(
+          //  borderRadius: BorderRadius.all(Radius.circular(8)),
+          //),
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+            shape: MaterialStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
+            )),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 5),
-          child: RaisedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-            // splashColor: Colors.yellow,
-            color: Colors.green,
-            shape: RoundedRectangleBorder(
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Cancel',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              )),
+          // splashColor: Colors.yellow,
+          //color: Colors.green,
+          //shape: RoundedRectangleBorder(
+          //  borderRadius: BorderRadius.all(Radius.circular(8)),
+          //),
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+            shape: MaterialStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
+            )),
           ),
         ),
       ],
+      buttonPadding: const EdgeInsets.all(7),
     );
   }
 }
@@ -512,15 +615,39 @@ class ImageDialog extends StatelessWidget {
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: Center(
-        child: CachedNetworkImage(
-          imageUrl: imgUrl,
-          placeholder: (context, url) => CircularProgressIndicator(),
-          errorWidget: (context, url, error) => Icon(Icons.error),
+        child: InteractiveViewer(
+          minScale: 0.1,
+          maxScale: 2.0,
+          child: CachedNetworkImage(
+            imageUrl: imgUrl,
+            placeholder: (context, url) => CircularProgressIndicator(),
+            errorWidget: (context, url, error) => Icon(Icons.error),
+          ),
         ),
       ),
     );
   }
 }
+
+//class ImageDialog extends StatelessWidget {
+//  final String imgUrl;
+//  ImageDialog({Key key, @required this.imgUrl}) : super(key: key);
+
+//  @override
+//  Widget build(BuildContext context) {
+//    return Dialog(
+//      elevation: 0,
+//      backgroundColor: Colors.transparent,
+//      child: Center(
+//        child: CachedNetworkImage(
+//          imageUrl: imgUrl,
+//          placeholder: (context, url) => CircularProgressIndicator(),
+//          errorWidget: (context, url, error) => Icon(Icons.error),
+//        ),
+//      ),
+//    );
+//  }
+//}
 
 //class VideoDialog extends StatefulWidget {
 //  final String videoUrl;
@@ -577,3 +704,59 @@ class ImageDialog extends StatelessWidget {
 //    );
 //  }
 //}
+
+//FutureBuilder _loadStorageList() => FutureBuilder(
+//        future: storageReference.child(classId).listAll(),
+//        builder: (context, snapshot) {
+//          if (snapshot == null) {
+//            return _loadingTile('Snapshot == null');
+//          }
+//          if (snapshot.hasError) {
+//            return _loadingTile('Snapshot has error');
+//          }
+//          if (snapshot.connectionState == ConnectionState.done) {
+//            if (snapshot.hasData) {
+//              int snapshotLen = snapshot.data.items.length;
+//              if (snapshotLen > 0) {
+//                return ListView.builder(
+//                  itemCount: snapshotLen,
+//                  itemBuilder: (context, index) => _studyClassMediaTile(
+//                      context,
+//                      snapshot.data.items[index].name,
+//                      getFileType(extension(snapshot.data.items[index].name)),
+//                      index),
+//                );
+//              } else {
+//                return _loadingTile('No Media items !');
+//              }
+//            } else {
+//              return _loadingTile('No Media items !');
+//            }
+//          }
+//          return _loadingTile('Loading....');
+//        },
+//      );
+//int _x = 0;
+//                    while (snapshot.state == TaskState.running) {
+//                      int _bytesTrans =
+//                          ((snapshot.bytesTransferred / snapshot.totalBytes) *
+//                                  100)
+//                              .toInt();
+//                      if (_bytesTrans != _x) {
+//                        _x = _bytesTrans;
+//                        setState(() {
+//                          _uploadIssue = "uploading ($_x%)";
+//                        });
+//                      }
+//                    }
+//                    if (snapshot.state == TaskState.success) {
+//                      widget.onSuccessfulUpload(fullFileName);
+//                      cp.closeProgress();
+//                      //print('upload successful !');
+//                      Navigator.of(context).pop();
+//                    } else {
+//                      cp.closeProgress();
+//                      setState(() {
+//                        _uploadIssue = "** upload error";
+//                      });
+//                    }

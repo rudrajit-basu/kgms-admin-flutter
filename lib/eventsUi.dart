@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'self.dart';
 
-final kEventsCollectionRef = Firestore.instance.collection('kgms-events');
+//final kEventsCollectionRef = Firestore.instance.collection('kgms-events');
+final kEventsCollectionRef =
+    FirebaseFirestore.instance.collection('kgms-events');
 
 class _TotalEvents {
   int _totEvents = 7;
@@ -121,11 +123,12 @@ class KgmsEventsBody extends StatelessWidget {
                 default:
                   {
                     // _totEvents = snapshot.data.documents.length;
-                    totalEvents.setTotalEvents(snapshot.data.documents.length);
+                    //totalEvents.setTotalEvents(snapshot.data.documents.length);
+                    totalEvents.setTotalEvents(snapshot.data.size);
                     return ListView.builder(
-                      itemCount: snapshot.data.documents.length,
+                      itemCount: snapshot.data.size,
                       itemBuilder: (context, index) =>
-                          _eventTile(context, snapshot.data.documents[index]),
+                          _eventTile(context, snapshot.data.docs[index]),
                     );
                   }
               }
@@ -230,7 +233,8 @@ class KgmsEventsFSDAppBar extends StatelessWidget
               final KCircularProgress cp = KCircularProgress(ctx: context);
               cp.showCircularProgress();
               try {
-                await kEventsCollectionRef.document(docID).delete();
+                //await kEventsCollectionRef.document(docID).delete();
+                await kEventsCollectionRef.doc(docID).delete();
                 cp.closeProgress();
                 Navigator.pop(context);
                 Navigator.pop(context, 'Event deleted successfully..!!');
@@ -279,7 +283,8 @@ class KgmsEventsFSDAppBar extends StatelessWidget
                     .showSnackBar(kSnackbar('Cannot delete new event.'));
               } else {
                 // print('delete doc: ${document.documentID}');
-                kDAlert(context, _deleteAlertW(context, document.documentID));
+                //kDAlert(context, _deleteAlertW(context, document.documentID));
+                kDAlert(context, _deleteAlertW(context, document.id));
               }
             },
           ),
@@ -572,9 +577,12 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
                             // print(
                             //     'submit update ${widget.document.documentID}');
                             try {
+                              //await kEventsCollectionRef
+                              //    .document(widget.document.documentID)
+                              //    .updateData(kDataMap);
                               await kEventsCollectionRef
-                                  .document(widget.document.documentID)
-                                  .updateData(kDataMap);
+                                  .doc(widget.document.id)
+                                  .update(kDataMap);
                               cp.closeProgress();
                               Navigator.pop(context, 'Update success..!!');
                             } catch (e) {
