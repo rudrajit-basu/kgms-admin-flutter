@@ -59,7 +59,8 @@ class VideoItemTag {
         'id': _id,
         'title': _snippet._title,
         'videoId': _snippet._videoId._videoId,
-        'status': _status._privacyStatus
+        'status': _status._privacyStatus,
+        'position': _snippet._position,
       };
 
   @override
@@ -70,18 +71,19 @@ class VideoItemTag {
 
 class VideoItemSnippetTag {
   final String _title;
+  final int _position;
   final VideoItemResourceTag _videoId;
 
-  VideoItemSnippetTag(this._title, this._videoId);
+  VideoItemSnippetTag(this._title, this._position, this._videoId);
 
   factory VideoItemSnippetTag.fromJson(dynamic json) {
-    return VideoItemSnippetTag(json['title'] as String,
+    return VideoItemSnippetTag(json['title'] as String, json['position'] as int,
         VideoItemResourceTag.fromJson(json['resourceId']));
   }
 
   @override
   String toString() {
-    return '{${this._title}, ${this._videoId}}';
+    return '{${this._title}, ${this._position}, ${this._videoId}}';
   }
 }
 
@@ -113,6 +115,20 @@ class VideoItemStatusTag {
   String toString() {
     return '{${this._privacyStatus}}';
   }
+}
+
+class VideoItemListTag {
+  final String _nextPageToken;
+  final String _prevPageToken;
+  final List<VideoItemTag> _items;
+
+  VideoItemListTag(this._nextPageToken, this._prevPageToken, this._items);
+
+  Map toJson() => {
+        'nextPageToken': _nextPageToken,
+        'prevPageToken': _prevPageToken,
+        'items': _items,
+      };
 }
 
 class UploadVideoStatusTag {

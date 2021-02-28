@@ -183,5 +183,5 @@ SnackBar kSnackbar(String msg) => SnackBar(
         textAlign: TextAlign.center,
       ),
       backgroundColor: Colors.lightBlue,
-      duration: Duration(seconds: 3),
+      duration: Duration(seconds: 2),
     );

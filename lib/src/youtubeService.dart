@@ -6,12 +6,15 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'model/youtubeModel.dart';
 
-const channelIdY = 'UCuS-pL1W9DnAgw0ju4rDOKA';
-const playlistsYUrl = 'https://www.googleapis.com/youtube/v3/playlists';
-// ?part=snippet&channelId=$channelIdY&maxResults=8
-const playlistItemsYUrl = 'https://www.googleapis.com/youtube/v3/playlistItems';
-const uploadItemYurl = 'https://www.googleapis.com/upload/youtube/v3/videos';
-const updateItemYurl = 'https://www.googleapis.com/youtube/v3/videos';
+const _channelIdY = 'UCuS-pL1W9DnAgw0ju4rDOKA';
+const _playlistsYUrl = 'https://www.googleapis.com/youtube/v3/playlists';
+// ?part=snippet&channelId=$_channelIdY&maxResults=8
+const _playlistItemsYUrl =
+    'https://www.googleapis.com/youtube/v3/playlistItems';
+const _uploadItemYurl = 'https://www.googleapis.com/upload/youtube/v3/videos';
+const _updateItemYurl = 'https://www.googleapis.com/youtube/v3/videos';
+const _recycleBinPlaylistId = 'PLyjpT0r_xK0dFPjDs9Hgi7qTs_S5VkFBO';
+//const _recycleBinPlaylistId = 'PLBCF2DAC6FFB574DE';
 //const insertPlaylistItemYurl = 'https://www.googleapis.com/youtube/v3/playlistItems';
 //const deletePlaylistItemYurl = 'https://www.googleapis.com/youtube/v3/playlistItems';
 
@@ -32,7 +35,7 @@ class YoutubeServ {
           redirectUri:
               'com.googleusercontent.apps.817681647082-tc6afavlps6e81u3ckdrd4h9o252phr7:/oauth2redirect');
 
-      print('GoogleOAuth2Client completed -->');
+      //print('GoogleOAuth2Client completed -->');
 
       try {
         _oauth2Helper = OAuth2Helper(client,
@@ -45,7 +48,7 @@ class YoutubeServ {
               'https://www.googleapis.com/auth/youtubepartner',
             ]);
 
-        print('OAuth2Helper completed -->');
+        //print('OAuth2Helper completed -->');
       } catch (e) {
         _oauth2Helper = null;
         print('OAuth2Helper error --> $e');
@@ -60,11 +63,11 @@ class YoutubeServ {
     final _oHelper = await oauth2Helper;
     if (_oHelper != null) {
       final playlistsReqStr =
-          playlistsYUrl + '?part=snippet&channelId=$channelIdY&maxResults=20';
+          _playlistsYUrl + '?part=snippet&channelId=$_channelIdY&maxResults=20';
       var resp = await _oHelper.get(playlistsReqStr);
-      print('resp completed -->');
+      //print('resp completed -->');
       if (resp.statusCode == 200) {
-        print('resp status code 200');
+        //print('resp status code 200');
         var jsonResp = null;
         try {
           jsonResp = convert.jsonDecode(resp.body);
@@ -77,7 +80,7 @@ class YoutubeServ {
           var jsonArr = jsonResp['items'] as List;
           List<VideoListTag> _tags =
               jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
-          //cacheServ.setEtag(playlistsYUrl, _playlistsEtag);
+          //cacheServ.setEtag(_playlistsYUrl, _playlistsEtag);
           //databaseServ.insertPlaylist(_tags);
           var _playlistId = null;
           for (final tag in _tags) {
@@ -91,21 +94,24 @@ class YoutubeServ {
         }
       } else {
         print('resp status --> ${resp.statusCode}');
-        print('resp headers --> ${resp.headers}');
-        print('resp body --> ${resp.body}');
+        //print('resp headers --> ${resp.headers}');
+        //print('resp body --> ${resp.body}');
       }
     }
     return null;
   }
 
-  Future<String> getYtPlaylistItem(String playlistID) async {
+  Future<String> getYtPlaylistItem(String playlistID, String pageToken) async {
     //String playlistID = await _getYtPlaylist(classId);
     final _oHelper = await oauth2Helper;
     if (playlistID != null) {
       if (_oHelper != null) {
-        final playlistItemsReqStr = playlistItemsYUrl +
-            '?part=snippet&part=status&playlistId=$playlistID&maxResults=20';
-        print('playlistItems req str --> $playlistItemsReqStr');
+        var playlistItemsReqStr = _playlistItemsYUrl +
+            '?part=snippet&part=status&playlistId=$playlistID&maxResults=10';
+        if (pageToken != null) {
+          playlistItemsReqStr = playlistItemsReqStr + '&pageToken=$pageToken';
+        }
+        //print('playlistItems req str --> $playlistItemsReqStr');
         var resp = await _oHelper.get(playlistItemsReqStr);
         if (resp.statusCode == 200) {
           var jsonResp = null;
@@ -115,20 +121,26 @@ class YoutubeServ {
             print('jsonResp is not valid json');
           }
           if (jsonResp != null) {
+            var _nextToken = jsonResp['nextPageToken'] as String;
+            var _prevToken = jsonResp['prevPageToken'] as String;
+            //print('nextToken --> $_nextToken & prevToken --> $_prevToken');
             var jsonArr = jsonResp['items'] as List;
             List<VideoItemTag> _tags = jsonArr
                 .map((tagJson) => VideoItemTag.fromJson(tagJson))
                 .toList();
-            String jsonTags = convert.jsonEncode(_tags);
-            return jsonTags;
+            //String jsonTags = convert.jsonEncode(_tags);
+            var viTag = VideoItemListTag(_nextToken, _prevToken, _tags);
+            String jsonStr = convert.jsonEncode(viTag);
+            //print('json string --> $jsonStr');
+            return jsonStr;
           } else {
-            print('jsonResp is null');
+            //print('jsonResp is null');
             return 'Play List Item json is null';
           }
         } else {
           print('resp status --> ${resp.statusCode}');
-          print('resp headers --> ${resp.headers}');
-          print('resp body --> ${resp.body}');
+          //print('resp headers --> ${resp.headers}');
+          //print('resp body --> ${resp.body}');
           return 'status code not 200';
         }
       } else {
@@ -142,9 +154,9 @@ class YoutubeServ {
   Future<String> uploadFileToYoutube(String filePath, String userAgent) async {
     final _oHelper = await oauth2Helper;
 
-    print('url --> $uploadItemYurl');
+    //print('url --> $_uploadItemYurl');
     //print('body --> $data');
-    print('file path --> $filePath');
+    //print('file path --> $filePath');
     //print('user Agent(uploadFileToYoutube) --> $userAgent');
 
     if (_oHelper != null) {
@@ -152,18 +164,18 @@ class YoutubeServ {
         final File _videoFile = File(filePath);
         var strm = await _videoFile.readAsBytes();
         var strmLen = _videoFile.lengthSync();
-        print('video len --> $strmLen');
+        //print('video len --> $strmLen');
         Map<String, String> headers = <String, String>{
           'Content-Type': 'application/octet-stream',
           'Content-Length': '$strmLen',
           'User-Agent': userAgent
         };
-        var resp = await _oHelper.post(uploadItemYurl,
+        var resp = await _oHelper.post(_uploadItemYurl,
             headers: headers, body: strm.toList());
         //var resp = await this._oauth2Helper.post();
-        print('resp from upload completed');
+        //print('resp from upload completed');
         if (resp.statusCode == 200) {
-          print('status code is 200');
+          //print('status code is 200');
           //print(resp.headers);
           //print(resp.body);
           var jsonResp = null;
@@ -174,19 +186,19 @@ class YoutubeServ {
           }
           if (jsonResp != null) {
             String _videoId = jsonResp['id'] as String;
-            print('video insert id --> $_videoId');
+            //print('video insert id --> $_videoId');
             return _videoId;
           }
         } else {
-          print('status code is not 200');
-          print(resp.headers);
-          print(resp.body);
+          print('status code is ${resp.statusCode}');
+          //print(resp.headers);
+          //print(resp.body);
         }
       } catch (e) {
         print('error during upload --> $e');
       }
     } else {
-      print('oauth is null');
+      //print('oauth is null');
     }
     return null;
   }
@@ -200,21 +212,21 @@ class YoutubeServ {
       var vUpdateTag =
           UploadVideoUpdateTag(vid, vSnippetTag, UploadVideoStatusTag());
       String jsonStr = convert.jsonEncode(vUpdateTag);
-      print('jsonStr --> $jsonStr');
-      final updateItemYurlStr = updateItemYurl + '?part=snippet%2Cstatus';
+      //print('jsonStr --> $jsonStr');
+      final updateItemYurlStr = _updateItemYurl + '?part=snippet%2Cstatus';
       http.Response resp =
-          await ytPutMethod(updateItemYurlStr, _oHelper, jsonStr, userAgent);
-      print('resp from update completed');
+          await _ytPutMethod(updateItemYurlStr, _oHelper, jsonStr, userAgent);
+      //print('resp from update completed');
       if (resp != null) {
         if (resp.statusCode == 200) {
-          print('status code is 200');
-          print(resp.headers);
-          print(resp.body);
+          //print('status code is 200');
+          //print(resp.headers);
+          //print(resp.body);
           return true;
         } else {
           print('status code is ${resp.statusCode}');
-          print(resp.headers);
-          print(resp.body);
+          //print(resp.headers);
+          //print(resp.body);
         }
       } else {
         print('resp is null');
@@ -223,15 +235,15 @@ class YoutubeServ {
     return false;
   }
 
-  Future<http.Response> ytPutMethod(String url, OAuth2Helper oHelper,
+  Future<http.Response> _ytPutMethod(String url, OAuth2Helper oHelper,
       String jsonStr, String userAgent) async {
     var tknResp = await oHelper.getToken();
     http.Response resp;
     try {
-      var headers1 = getHeaders1(tknResp.accessToken, userAgent);
+      var headers1 = _getHeaders1(tknResp.accessToken, userAgent);
       resp = await http.Client().put(url, headers: headers1, body: jsonStr);
       if (resp.statusCode == 401) {
-        print('ytPutMethod status = 401');
+        print('_ytPutMethod status = 401');
         if (tknResp.hasRefreshToken()) {
           tknResp = await oHelper.refreshToken(tknResp.refreshToken);
         } else {
@@ -239,18 +251,18 @@ class YoutubeServ {
         }
 
         if (tknResp != null) {
-          var headers2 = getHeaders1(tknResp.accessToken, userAgent);
+          var headers2 = _getHeaders1(tknResp.accessToken, userAgent);
           resp = await http.Client().put(url, headers: headers2, body: jsonStr);
         }
       }
       return resp;
     } catch (e) {
-      print('error ytPutMethod --> $e');
+      print('error _ytPutMethod --> $e');
     }
     return null;
   }
 
-  Map<String, String> getHeaders1(String token, String userAgent) {
+  Map<String, String> _getHeaders1(String token, String userAgent) {
     Map<String, String> headers = Map<String, String>();
     headers['Authorization'] = 'Bearer ' + token;
     headers['Accept'] = 'application/json';
@@ -259,44 +271,7 @@ class YoutubeServ {
     return headers;
   }
 
-  Future<String> getYtRecyclePlaylist(String classId) async {
-    final _oHelper = await oauth2Helper;
-    if (_oHelper != null) {
-      final playlistsReqStr =
-          playlistsYUrl + '?part=snippet&channelId=$channelIdY&maxResults=20';
-      var resp = await _oHelper.get(playlistsReqStr);
-      if (resp.statusCode == 200) {
-        print('status code is 200');
-        var jsonResp = null;
-        try {
-          jsonResp = convert.jsonDecode(resp.body);
-        } on FormatException catch (e) {
-          print('jsonResp is not valid json');
-        }
-        if (jsonResp != null) {
-          var jsonArr = jsonResp['items'] as List;
-          List<VideoListTag> _tags =
-              jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
-          var _playlistId = null;
-          final pTitle = classId + '_recycle_bin';
-          for (final tag in _tags) {
-            if (tag.snippet.title == pTitle) {
-              _playlistId = tag.id;
-              break;
-            }
-          }
-          return _playlistId;
-        }
-      } else {
-        print('resp status --> ${resp.statusCode}');
-        print('resp headers --> ${resp.headers}');
-        print('resp body --> ${resp.body}');
-      }
-    } else {
-      print('oauth is null');
-    }
-    return null;
-  }
+  String get recycleBinPlaylistId => _recycleBinPlaylistId;
 
   Future<String> setYtVideoToPlaylist(
       String playlistId, String videoId, String userAgent) async {
@@ -307,8 +282,8 @@ class YoutubeServ {
           UpdateVideoPlaylistSnippetTag(playlistId, _vResourceTag);
       var _vUpdatePlaylistTag = UpdateVideoPlaylistTag(_vSnippetTag);
       String jsonStr = convert.jsonEncode(_vUpdatePlaylistTag);
-      print('setYtVideoToPlaylist --> $jsonStr');
-      final postReqStr = playlistItemsYUrl + '?part=snippet%2Cstatus';
+      //print('setYtVideoToPlaylist --> $jsonStr');
+      final postReqStr = _playlistItemsYUrl + '?part=snippet%2Cstatus';
       print('postReqStr --> $postReqStr');
       Map<String, String> headers = <String, String>{
         'Content-Type': 'application/json',
@@ -317,9 +292,9 @@ class YoutubeServ {
       };
       var resp =
           await _oHelper.post(postReqStr, headers: headers, body: jsonStr);
-      print('setYtVideoToPlaylist req completed !');
+      //print('setYtVideoToPlaylist req completed !');
       if (resp.statusCode == 200) {
-        print('status code is 200');
+        //print('status code is 200');
         //print('resp headers --> ${resp.headers}');
         //print('resp body --> ${resp.body}');
         var jsonResp = null;
@@ -331,14 +306,14 @@ class YoutubeServ {
         if (jsonResp != null) {
           VideoItemTag itemTag = VideoItemTag.fromJson(jsonResp);
           String itemTagStr = convert.jsonEncode(itemTag);
-          print('itemTagStr --> $itemTagStr');
+          //print('itemTagStr --> $itemTagStr');
           return itemTagStr;
         }
         //return true;
       } else {
         print('resp status --> ${resp.statusCode}');
-        print('resp headers --> ${resp.headers}');
-        print('resp body --> ${resp.body}');
+        //print('resp headers --> ${resp.headers}');
+        //print('resp body --> ${resp.body}');
       }
     }
     return null;
@@ -347,20 +322,20 @@ class YoutubeServ {
   Future<bool> removeYtVideoFromPlaylist(String id, String userAgent) async {
     final _oHelper = await oauth2Helper;
     if (_oHelper != null) {
-      final delReqStr = playlistItemsYUrl + '?id=$id';
-      print('delReqStr --> $delReqStr');
+      final delReqStr = _playlistItemsYUrl + '?id=$id';
+      //print('delReqStr --> $delReqStr');
       Map<String, String> headers = <String, String>{
         'Accept': 'application/json',
         'User-Agent': userAgent
       };
       var resp = await _oHelper.delete(delReqStr, headers: headers);
-      print('removeYtVideoFromPlaylist req completed !');
+      //print('removeYtVideoFromPlaylist req completed !');
       if (resp.statusCode == 204) {
-        print('status code is 204');
+        //print('status code is 204');
         return true;
       } else {
         print('resp status --> ${resp.statusCode}');
-        print('resp headers --> ${resp.headers}');
+        //print('resp headers --> ${resp.headers}');
       }
     }
     return false;
@@ -393,12 +368,12 @@ YoutubeServ yServ = new YoutubeServ();
 //          UploadVideoUpdateTag(vid, vSnippetTag, UploadVideoStatusTag());
 //      String jsonStr = convert.jsonEncode(vUpdateTag);
 //      print('jsonStr --> $jsonStr');
-//      final updateItemYurlStr = updateItemYurl + '?part=snippet%2Cstatus';
+//      final updateItemYurlStr = _updateItemYurl + '?part=snippet%2Cstatus';
 //      //yHttpClient = http.Client();
 //      var tknResp = await _oHelper.getToken();
 //      http.Response resp;
 //      try {
-//        var headers1 = getHeaders1(tknResp.accessToken, userAgent);
+//        var headers1 = _getHeaders1(tknResp.accessToken, userAgent);
 //        //print('headers --> $headers');
 //        resp = await http.Client()
 //            .put(updateItemYurlStr, headers: headers1, body: jsonStr);
@@ -412,7 +387,7 @@ YoutubeServ yServ = new YoutubeServ();
 //          }
 
 //          if (tknResp != null) {
-//            var headers2 = getHeaders1(tknResp.accessToken, userAgent);
+//            var headers2 = _getHeaders1(tknResp.accessToken, userAgent);
 //            resp = await http.Client()
 //                .put(updateItemYurlStr, headers: headers2, body: jsonStr);
 //          }
@@ -433,4 +408,43 @@ YoutubeServ yServ = new YoutubeServ();
 //      }
 //    }
 //    return false;
+//  }
+
+//Future<String> getYtRecyclePlaylist(String classId) async {
+//    final _oHelper = await oauth2Helper;
+//    if (_oHelper != null) {
+//      final playlistsReqStr =
+//          _playlistsYUrl + '?part=snippet&channelId=$_channelIdY&maxResults=20';
+//      var resp = await _oHelper.get(playlistsReqStr);
+//      if (resp.statusCode == 200) {
+//        print('status code is 200');
+//        var jsonResp = null;
+//        try {
+//          jsonResp = convert.jsonDecode(resp.body);
+//        } on FormatException catch (e) {
+//          print('jsonResp is not valid json');
+//        }
+//        if (jsonResp != null) {
+//          var jsonArr = jsonResp['items'] as List;
+//          List<VideoListTag> _tags =
+//              jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
+//          var _playlistId = null;
+//          final pTitle = classId + '_recycle_bin';
+//          for (final tag in _tags) {
+//            if (tag.snippet.title == pTitle) {
+//              _playlistId = tag.id;
+//              break;
+//            }
+//          }
+//          return _playlistId;
+//        }
+//      } else {
+//        print('resp status --> ${resp.statusCode}');
+//        print('resp headers --> ${resp.headers}');
+//        print('resp body --> ${resp.body}');
+//      }
+//    } else {
+//      print('oauth is null');
+//    }
+//    return null;
 //  }

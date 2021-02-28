@@ -305,8 +305,8 @@ class KgmsClassStudyMain extends StatelessWidget {
             classId: _KgmsClassCurrentDoc.classId),
         Icons.ondemand_video_rounded,
         true));
-    fabList
-        .add(_buildMainButtons(ctx, 'Diary', null, Icons.book_rounded, true));
+    //fabList
+    //    .add(_buildMainButtons(ctx, 'Diary', null, Icons.book_rounded, true));
     //fabList.add(
     //    _buildMainButtons(ctx, 'Study', KgmsClassStudy(), Icons.face, true));
     // fabList.add(_buildMainButtons(ctx, 'Accounts', null, Icons.business));
@@ -859,13 +859,18 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: IconButton(
             icon: const Icon(Icons.add_photo_alternate, size: 30),
             tooltip: 'add new media',
-            onPressed: () {
+            onPressed: () async {
               // print('add new media');
-              _kStudyNavigation(
-                  context,
-                  StudyMedia(
-                      className: _KgmsClassCurrentDoc.className,
-                      classId: _KgmsClassCurrentDoc.classId));
+              bool _internet = await isInternetAvailable();
+              if (_internet) {
+                _kStudyNavigation(
+                    context,
+                    StudyMedia(
+                        className: _KgmsClassCurrentDoc.className,
+                        classId: _KgmsClassCurrentDoc.classId));
+              } else {
+                kAlert(context, noInternetWidget);
+              }
             },
           ),
         ),
@@ -874,13 +879,18 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: IconButton(
             icon: const Icon(Icons.ondemand_video_rounded, size: 28),
             tooltip: 'add new video',
-            onPressed: () {
+            onPressed: () async {
               //print('add new video');
-              _kStudyNavigation(
-                  context,
-                  StudyVideo(
-                      className: _KgmsClassCurrentDoc.className,
-                      classId: _KgmsClassCurrentDoc.classId));
+              bool _internet = await isInternetAvailable();
+              if (_internet) {
+                _kStudyNavigation(
+                    context,
+                    StudyVideo(
+                        className: _KgmsClassCurrentDoc.className,
+                        classId: _KgmsClassCurrentDoc.classId));
+              } else {
+                kAlert(context, noInternetWidget);
+              }
             },
           ),
         ),

@@ -37,16 +37,21 @@ class StudyMediaAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: IconButton(
             icon: const Icon(Icons.add, size: 30),
             tooltip: 'add new media',
-            onPressed: () {
+            onPressed: () async {
               // print('add new media');
-              kDAlert(
-                  context,
-                  MediaFilePickerForm(
-                      classId: classId,
-                      onSuccessfulUpload: (String fileName) async {
-                        Provider.of<MediaItemsModel>(context, listen: false)
-                            .addItem(fileName);
-                      }));
+              bool _internet = await isInternetAvailable();
+              if (_internet) {
+                kDAlert(
+                    context,
+                    MediaFilePickerForm(
+                        classId: classId,
+                        onSuccessfulUpload: (String fileName) async {
+                          Provider.of<MediaItemsModel>(context, listen: false)
+                              .addItem(fileName);
+                        }));
+              } else {
+                kAlert(context, noInternetWidget);
+              }
             },
           ),
         ),
