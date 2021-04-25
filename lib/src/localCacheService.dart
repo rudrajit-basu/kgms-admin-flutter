@@ -25,6 +25,23 @@ class LocalCacheServ {
     return _pref.getString('kUserName') ?? '';
   }
 
+  Future<bool> setJsonData(String key, String data) async {
+    final _pref = await preference;
+    try {
+      if (key != null && data != null) {
+        return _pref.setString(key, data);
+      }
+    } catch (e) {
+      print('LocalCacheServ --> setJsonData --> $e');
+    }
+    return false;
+  }
+
+  Future<String> getJsonData(String key) async {
+    final _pref = await preference;
+    return _pref.getString(key) ?? '';
+  }
+
   //Future<bool> setEtag(String url, String value) async {
   //  final _pref = await preference;
   //  if (url != null && !url.isEmpty && value != null && !value.isEmpty) {

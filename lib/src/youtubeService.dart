@@ -5,6 +5,7 @@ import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'model/youtubeModel.dart';
+import 'localFileStorageService.dart';
 
 const _channelIdY = 'UCuS-pL1W9DnAgw0ju4rDOKA';
 const _playlistsYUrl = 'https://www.googleapis.com/youtube/v3/playlists';
@@ -14,6 +15,8 @@ const _playlistItemsYUrl =
 const _uploadItemYurl = 'https://www.googleapis.com/upload/youtube/v3/videos';
 const _updateItemYurl = 'https://www.googleapis.com/youtube/v3/videos';
 const _recycleBinPlaylistId = 'PLyjpT0r_xK0dFPjDs9Hgi7qTs_S5VkFBO';
+const _userChannelUploadedVideoYurl =
+    'https://www.googleapis.com/youtube/v3/channels';
 //const _recycleBinPlaylistId = 'PLBCF2DAC6FFB574DE';
 //const insertPlaylistItemYurl = 'https://www.googleapis.com/youtube/v3/playlistItems';
 //const deletePlaylistItemYurl = 'https://www.googleapis.com/youtube/v3/playlistItems';
@@ -26,6 +29,7 @@ const _recycleBinPlaylistId = 'PLyjpT0r_xK0dFPjDs9Hgi7qTs_S5VkFBO';
 
 class YoutubeServ {
   OAuth2Helper _oauth2Helper;
+  String _userChannelUploadedVideoPlaylistId;
 
   Future<OAuth2Helper> get oauth2Helper async {
     if (_oauth2Helper == null) {
@@ -82,6 +86,7 @@ class YoutubeServ {
               jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
           //cacheServ.setEtag(_playlistsYUrl, _playlistsEtag);
           //databaseServ.insertPlaylist(_tags);
+          String jsonArrStr = convert.jsonEncode(_tags);
           var _playlistId = null;
           for (final tag in _tags) {
             if (tag.snippet.title == classId) {
@@ -90,6 +95,11 @@ class YoutubeServ {
               break;
             }
           }
+          //print('getYtPlaylist json str ---> $jsonArrStr');
+          fileServ.writeKeyWithData('classesAndPlaylistId', jsonArrStr);
+          //.then(
+          //    (result) => print(
+          //        'writeKeyWithData = key classesAndPlaylistId --> $result'));
           return _playlistId;
         }
       } else {
@@ -123,13 +133,15 @@ class YoutubeServ {
           if (jsonResp != null) {
             var _nextToken = jsonResp['nextPageToken'] as String;
             var _prevToken = jsonResp['prevPageToken'] as String;
+            var _totResults = jsonResp['pageInfo']['totalResults'] as int;
             //print('nextToken --> $_nextToken & prevToken --> $_prevToken');
             var jsonArr = jsonResp['items'] as List;
             List<VideoItemTag> _tags = jsonArr
                 .map((tagJson) => VideoItemTag.fromJson(tagJson))
                 .toList();
             //String jsonTags = convert.jsonEncode(_tags);
-            var viTag = VideoItemListTag(_nextToken, _prevToken, _tags);
+            var viTag =
+                VideoItemListTag(_nextToken, _prevToken, _tags, _totResults);
             String jsonStr = convert.jsonEncode(viTag);
             //print('json string --> $jsonStr');
             return jsonStr;
@@ -339,6 +351,104 @@ class YoutubeServ {
       }
     }
     return false;
+  }
+
+  Future<String> getUserChannelUploadPlaylistId() async {
+    if (_userChannelUploadedVideoPlaylistId == null) {
+      final _oHelper = await oauth2Helper;
+      if (_oHelper != null) {
+        final channelUploadPlaylistReqStr =
+            _userChannelUploadedVideoYurl + '?part=contentDetails&mine=true';
+        var resp = await _oHelper.get(channelUploadPlaylistReqStr);
+        if (resp.statusCode == 200) {
+          var jsonResp = null;
+          try {
+            jsonResp = convert.jsonDecode(resp.body);
+          } on FormatException catch (e) {
+            print('jsonResp is not valid json');
+          }
+          if (jsonResp != null) {
+            var jsonArr = jsonResp['items'] as List;
+            try {
+              _userChannelUploadedVideoPlaylistId = jsonArr[0]['contentDetails']
+                  ['relatedPlaylists']['uploads'] as String;
+              print('getUserChannelUploadPlaylistId from http req !');
+            } catch (e) {
+              _userChannelUploadedVideoPlaylistId = null;
+            }
+          }
+        }
+      }
+    }
+    return _userChannelUploadedVideoPlaylistId;
+  }
+
+  Future<List<String>> getPlaylistMatchingVideo(
+      List<dynamic> playListItems, String videoId) async {
+    final List<String> playLists = [];
+    final _oHelper = await oauth2Helper;
+    if (_oHelper != null) {
+      await Future.wait(playListItems.map((item) async {
+        var playlistItemsReqStr = _playlistItemsYUrl +
+            '?part=contentDetails&maxResults=1&playlistId=${item['id'] as String}&videoId=$videoId';
+        //print('playlistItemsReqStr --> $playlistItemsReqStr');
+        var resp = await _oHelper.get(playlistItemsReqStr);
+        if (resp.statusCode == 200) {
+          try {
+            var jsonResp = convert.jsonDecode(resp.body);
+            var totRes = jsonResp['pageInfo']['totalResults'] as int;
+            if (totRes > 0) {
+              playLists.add(item['title'] as String);
+            }
+          } on FormatException catch (e) {
+            print('jsonResp is not valid json');
+          } catch (e) {
+            print('getPlaylistMatchingVideo error --> $e');
+          }
+        } else {
+          print(
+              'for ${item['title'] as String} resp status --> ${resp.statusCode}');
+        }
+      }).toList());
+    }
+    return playLists;
+  }
+
+  Future<List<String>> setYtVideoToMultiplePlaylist(
+      String playlistsEncoded, String videoId, String userAgent) async {
+    //print('user agent --> $userAgent');
+    final List<String> errorClassList = [];
+    List<dynamic> _jsonArr = null;
+    try {
+      _jsonArr = convert.jsonDecode(playlistsEncoded) as List;
+    } on FormatException catch (e) {
+      print('playlistsEncoded is not valid json');
+    }
+    if (_jsonArr != null) {
+      final _oHelper = await oauth2Helper;
+      if (_oHelper != null) {
+        final postReqStr = _playlistItemsYUrl + '?part=snippet';
+        await Future.wait(_jsonArr.map((item) async {
+          var _vResourceTag = UpdateVideoPlaylistResourceTag(videoId);
+          var _vSnippetTag = UpdateVideoPlaylistSnippetTag(
+              item['playlistId'] as String, _vResourceTag);
+          var _vUpdatePlaylistTag = UpdateVideoPlaylistTag(_vSnippetTag);
+          String jsonStr = convert.jsonEncode(_vUpdatePlaylistTag);
+          //print('$jsonStr');
+          Map<String, String> headers = <String, String>{
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': userAgent
+          };
+          var resp =
+              await _oHelper.post(postReqStr, headers: headers, body: jsonStr);
+          if (resp.statusCode != 200) {
+            errorClassList.add(item['className'] as String);
+          }
+        }).toList());
+      }
+    }
+    return errorClassList;
   }
 }
 

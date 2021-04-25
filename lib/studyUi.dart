@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'self.dart';
 import 'studyMediaItemsUi.dart';
 import 'studyVideoItemsUi.dart';
+import 'dart:async';
+import 'dart:convert' as convert;
 
 //final kClassesCollectionRef = Firestore.instance.collection('kgms-classes');
 final kClassesCollectionRef =
@@ -20,6 +22,7 @@ final kClassesCollectionRef =
 
 class _TotalKlist {
   int _totalKList = 0;
+  //String _classesAndIds;
 
   int getTotalKlist() {
     return _totalKList;
@@ -27,6 +30,46 @@ class _TotalKlist {
 
   void setTotalKList(int tList) {
     this._totalKList = tList;
+  }
+
+  Future<void> setClassesAndIds(List<DocumentSnapshot> data) {
+    final List<_ClassesAndIds> _ciList = [];
+    data.forEach((document) {
+      _ciList.add(_ClassesAndIds(
+          document['classId'] as String, document['className'] as String));
+    });
+    String _classesAndIds = convert.jsonEncode(_ciList);
+    //print('_classesAndIds --> $_classesAndIds');
+    //cacheServ
+    //    .setJsonData('classesAndIds', _classesAndIds)
+    //    .then((result) => print('setJsonData from _TotalKlist --> $result'));
+    //print('data --> ${data[0]['className']}');
+    fileServ.writeKeyWithData('classesAndIds', _classesAndIds);
+    //.then(
+    //    (result) => print('writeKeyWithData = key classesAndIds --> $result'));
+  }
+
+  //String get classesAndIdsJson => _classesAndIds;
+}
+
+class _ClassesAndIds {
+  final String _classId;
+  final String _className;
+
+  _ClassesAndIds(this._classId, this._className);
+
+  //Map<String, dynamic> toMap() {
+  //  return {'classId': _classId, 'className': _className};
+  //}
+
+  Map toJson() => {
+        'classId': _classId,
+        'className': _className,
+      };
+
+  @override
+  String toString() {
+    return '{${this._classId}, ${this._className}}';
   }
 }
 
@@ -217,6 +260,7 @@ class KgmsStudyClassBody extends StatelessWidget {
                 {
                   //totalClasses.setTotalKList(snapshot.data.documents.length);
                   totalClasses.setTotalKList(snapshot.data.size);
+                  totalClasses.setClassesAndIds(snapshot.data.docs);
                   return ListView.builder(
                     itemCount: snapshot.data.size,
                     itemBuilder: (context, index) => _studyClassesTile(

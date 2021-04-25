@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'self.dart';
+import 'dart:async';
 
 //final kEventsCollectionRef = Firestore.instance.collection('kgms-events');
 final kEventsCollectionRef =
@@ -342,37 +343,50 @@ class KgmsEventsForm extends StatefulWidget {
 }
 
 class _KgmsEventsFormState extends State<KgmsEventsForm> {
-  GlobalKey<FormState> _formKey;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   // String ddbValue;
 
   final _subtitleFocus = FocusNode();
   final _descFocus = FocusNode();
 
   String _idCtrl;
-  // final _headerCtrl = TextEditingController.fromValue();
-  // final _subHeaderCtrl = TextEditingController();
-  // final _descCtrl = TextEditingController();
-  TextEditingController _headerCtrl;
-  TextEditingController _subHeaderCtrl;
-  TextEditingController _descCtrl;
+  //TextEditingController _headerCtrl;
+  //TextEditingController _subHeaderCtrl;
+  //TextEditingController _descCtrl;
+  final TextEditingController _headerCtrl = TextEditingController();
+  final TextEditingController _subHeaderCtrl = TextEditingController();
+  final TextEditingController _descCtrl = TextEditingController();
 
   final List<String> _eventNumList = ['1', '2'];
 
   @override
   void initState() {
     super.initState();
-    _formKey = GlobalKey<FormState>();
+    _init();
+    //_formKey = GlobalKey<FormState>();
+    //for (var i = 3; i < 11; i++) {
+    //  _eventNumList.add(i.toString());
+    //}
+    //_idCtrl =
+    //    widget.document != null ? widget.document['tagId'].toString() : '1';
+    //_headerCtrl = TextEditingController(
+    //    text: widget.document != null ? widget.document['header'] : '');
+    //_subHeaderCtrl = TextEditingController(
+    //    text: widget.document != null ? widget.document['date'] : '');
+    //_descCtrl = TextEditingController(
+    //    text: widget.document != null ? widget.document['desc'] : '');
+  }
+
+  Future<void> _init() {
     for (var i = 3; i < 11; i++) {
       _eventNumList.add(i.toString());
     }
     _idCtrl =
         widget.document != null ? widget.document['tagId'].toString() : '1';
-    _headerCtrl = TextEditingController(
-        text: widget.document != null ? widget.document['header'] : '');
-    _subHeaderCtrl = TextEditingController(
-        text: widget.document != null ? widget.document['date'] : '');
-    _descCtrl = TextEditingController(
-        text: widget.document != null ? widget.document['desc'] : '');
+    _headerCtrl.text = widget.document != null ? widget.document['header'] : '';
+    _subHeaderCtrl.text =
+        widget.document != null ? widget.document['date'] : '';
+    _descCtrl.text = widget.document != null ? widget.document['desc'] : '';
   }
 
   @override

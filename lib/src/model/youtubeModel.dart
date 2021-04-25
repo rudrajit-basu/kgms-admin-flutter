@@ -35,6 +35,11 @@ class VideoListTag {
     return {'id': id, 'title': snippet.title};
   }
 
+  Map toJson() => {
+        'id': id,
+        'title': snippet.title,
+      };
+
   @override
   String toString() {
     return '{${this._id}, ${this._snippet}}';
@@ -121,13 +126,16 @@ class VideoItemListTag {
   final String _nextPageToken;
   final String _prevPageToken;
   final List<VideoItemTag> _items;
+  final int _totalResults;
 
-  VideoItemListTag(this._nextPageToken, this._prevPageToken, this._items);
+  VideoItemListTag(this._nextPageToken, this._prevPageToken, this._items,
+      this._totalResults);
 
   Map toJson() => {
         'nextPageToken': _nextPageToken,
         'prevPageToken': _prevPageToken,
         'items': _items,
+        'totalResults': _totalResults,
       };
 }
 
@@ -210,6 +218,12 @@ class UpdateVideoPlaylistTag {
     return {'snippet': snippet};
   }
 }
+
+//class UserChannelUploadedVideoPlaylistId {
+//  final String UploadedVideoPlaylistId;
+
+//  UserChannelUploadedVideoPlaylistId(this);
+//}
 
 //class PlaylistDetail {
 //  final String etag;

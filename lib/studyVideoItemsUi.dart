@@ -27,6 +27,14 @@ class StudyVideoAppBar extends StatelessWidget implements PreferredSizeWidget {
     if (result != null) {
       Scaffold.of(context).showSnackBar(kSnackbar(result));
     }
+    bool _shouldRefresh =
+        Provider.of<VideoItemModel>(context, listen: false).shouldRefresh;
+    if (_shouldRefresh) {
+      Provider.of<VideoItemModel>(context, listen: false)
+          .reloadPlaylist(classId);
+      Provider.of<VideoItemModel>(context, listen: false)
+          .setShouldRefresh(false);
+    }
   }
 
   @override
@@ -37,7 +45,8 @@ class StudyVideoAppBar extends StatelessWidget implements PreferredSizeWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
-          Text('Video :'),
+          Text(
+              'Video :  ${context.watch<VideoItemModel>().totalResults > 0 ? '(${context.watch<VideoItemModel>().totalResults})' : ''}'),
           Text('$className', style: TextStyle(fontSize: 17.5))
         ],
       ),
@@ -60,7 +69,7 @@ class StudyVideoAppBar extends StatelessWidget implements PreferredSizeWidget {
                   if (pid != null) {
                     var itemLen =
                         Provider.of<VideoItemModel>(context, listen: false)
-                            .getItemCount();
+                            .getItemCount;
                     //print('item len --> $itemLen');
                     if (itemLen < 10) {
                       final String usrAgent =
@@ -116,7 +125,7 @@ class StudyVideoAppBar extends StatelessWidget implements PreferredSizeWidget {
                   if (pid != null) {
                     var itemLen =
                         Provider.of<VideoItemModel>(context, listen: false)
-                            .getItemCount();
+                            .getItemCount;
                     //print('item len --> $itemLen');
                     if (itemLen < 10) {
                       //print('go to incomplete videos !');
@@ -129,13 +138,16 @@ class StudyVideoAppBar extends StatelessWidget implements PreferredSizeWidget {
                           context,
                           StudyRecycleVideo(
                               className: className,
-                              classId: classId,
-                              playlistId: pid,
+                              //classId: classId,
+                              //playlistId: pid,
                               userAgent: usrAgent,
                               onSuccessfulRecycle: (String jsonStr) async {
+                                //Provider.of<VideoItemModel>(context,
+                                //        listen: false)
+                                //    .addItemByString(jsonStr);
                                 Provider.of<VideoItemModel>(context,
                                         listen: false)
-                                    .addItemByString(jsonStr);
+                                    .setShouldRefresh(true);
                               }));
                     } else {
                       Scaffold.of(context)
@@ -204,6 +216,10 @@ class VideoItemModel with ChangeNotifier {
 
   String get userAgent => _userAgent;
 
+  int _totalResults = 0;
+
+  int get totalResults => _totalResults;
+
   static const _platform =
       const MethodChannel('flutter.kgmskid.kgms_admin/firestorage');
 
@@ -226,7 +242,10 @@ class VideoItemModel with ChangeNotifier {
 
   Future<void> _setYtPlaylistItem(String classId) async {
     if (_classPlayListID == null) {
-      var _playlistId = await yServ.getYtPlaylist(classId);
+      var _playlistId = await _getPlalistIdTitle(classId);
+      if (_playlistId == null) {
+        _playlistId = await yServ.getYtPlaylist(classId);
+      }
       //print('playlistId from ui --> $_playlistId');
       _classPlayListID = _playlistId;
     }
@@ -253,6 +272,7 @@ class VideoItemModel with ChangeNotifier {
             _videoItems.add(vi);
           }
         }
+        _totalResults = _jsonResp['totalResults'] as int;
       }
 
       if (_userAgent == '') {
@@ -266,15 +286,40 @@ class VideoItemModel with ChangeNotifier {
     });
   }
 
+  Future<String> _getPlalistIdTitle(String classId) async {
+    String playlistId = null;
+    String data = await fileServ.readDataByKey('classesAndPlaylistId');
+    if (data != 'nil') {
+      var _jsonArr = null;
+      try {
+        _jsonArr = convert.jsonDecode(data) as List;
+      } on FormatException catch (e) {
+        print('_validatePlaylistUpdate data = $data and error = $e');
+      }
+      if (_jsonArr != null) {
+        for (final tag in _jsonArr) {
+          var clId = tag['title'] as String;
+          if (classId == clId) {
+            playlistId = tag['id'] as String;
+            break;
+          }
+        }
+      }
+    }
+    return playlistId;
+  }
+
   void removeAll() {
     _videoItems.clear();
     notifyListeners();
   }
 
-  //void reloadPlaylist(String classId) {
-  //  _videoItems.clear();
-  //  _setYtPlaylistItem(classId);
-  //}
+  void reloadPlaylist(String classId) {
+    _videoItems.clear();
+    _isWaiting = true;
+    _setYtPlaylistItem(classId);
+  }
+
   void removeItem(_VideoItem item) {
     if (_videoItems.remove(item)) {
       notifyListeners();
@@ -309,9 +354,16 @@ class VideoItemModel with ChangeNotifier {
     }
   }
 
-  int getItemCount() {
-    return _videoItems.length;
+  bool _shouldRefresh = false;
+
+  bool get shouldRefresh => _shouldRefresh;
+
+  void setShouldRefresh(bool value) {
+    _shouldRefresh = value;
+    notifyListeners();
   }
+
+  int get getItemCount => _videoItems.length;
 
   bool getIsWaiting() {
     return _isWaiting;
@@ -371,6 +423,20 @@ class StudyVideoBody extends StatelessWidget {
 
   String _rPlaylistId = null;
 
+  Future<List<dynamic>> getPlalistIdTitle() async {
+    String data = await fileServ.readDataByKey('classesAndPlaylistId');
+    if (data != 'nil') {
+      var _jsonArr = null;
+      try {
+        _jsonArr = convert.jsonDecode(data) as List;
+      } on FormatException catch (e) {
+        print('_validatePlaylistUpdate data = $data and error = $e');
+      }
+      return _jsonArr;
+    }
+    return null;
+  }
+
   AlertDialog _removeVideoAlertW(BuildContext context, _VideoItem item) =>
       AlertDialog(
         title: Text('Are you sure to remove: ${item.title}'),
@@ -390,49 +456,24 @@ class StudyVideoBody extends StatelessWidget {
             onPressed: () async {
               final KCircularProgress cp = KCircularProgress(ctx: context);
               cp.showCircularProgress();
-              //if (_rPlaylistId == null) {
-              //  var _rPid = await yServ.getYtRecyclePlaylist(classId);
-              //  _rPlaylistId = _rPid;
-              //  print('_rPid fetched **');
-              //}
-              _rPlaylistId = yServ.recycleBinPlaylistId;
-              if (_rPlaylistId != null) {
-                //print('rPlaylistId --> $_rPlaylistId');
-                //print('remove video item --> ${item.videoId}, ${item.id}');
-                final String usrAgent =
-                    Provider.of<VideoItemModel>(context, listen: false)
-                        .userAgent;
-                //print('user agent --> $usrAgent');
-                bool _isDel =
-                    await yServ.removeYtVideoFromPlaylist(item.id, usrAgent);
-                if (_isDel) {
-                  String _isPSet = await yServ.setYtVideoToPlaylist(
-                      _rPlaylistId, item.videoId, usrAgent);
-                  if (_isPSet != null) {
-                    Provider.of<VideoItemModel>(context, listen: false)
-                        .removeItem(item);
-                    cp.closeProgress();
-                    //_reloadPlaylist(context);
-                    Navigator.pop(context);
-                    Scaffold.of(context).showSnackBar(
-                        kSnackbar('Video removed successfully..!!'));
-                  } else {
-                    cp.closeProgress();
-                    //print('error in set playlist');
-                    Scaffold.of(context).showSnackBar(
-                        kSnackbar('Set to playlist unsuccessful'));
-                  }
-                } else {
-                  cp.closeProgress();
-                  //print('error in delete from playlist');
-                  Scaffold.of(context).showSnackBar(
-                      kSnackbar('Delete from Playlist unsuccessful'));
-                }
+              //_rPlaylistId = yServ.recycleBinPlaylistId;
+              final String usrAgent =
+                  Provider.of<VideoItemModel>(context, listen: false).userAgent;
+              bool _isDel =
+                  await yServ.removeYtVideoFromPlaylist(item.id, usrAgent);
+              if (_isDel) {
+                Provider.of<VideoItemModel>(context, listen: false)
+                    .removeItem(item);
+                cp.closeProgress();
+                //_reloadPlaylist(context);
+                Navigator.pop(context);
+                Scaffold.of(context)
+                    .showSnackBar(kSnackbar('Video removed successfully..!!'));
               } else {
                 cp.closeProgress();
-                //print('remove playlist not created');
-                Scaffold.of(context)
-                    .showSnackBar(kSnackbar('Remove playlist not created'));
+                //print('error in delete from playlist');
+                Scaffold.of(context).showSnackBar(
+                    kSnackbar('Delete from Playlist unsuccessful'));
               }
             },
           ),
@@ -511,6 +552,53 @@ class StudyVideoBody extends StatelessWidget {
                   ),
                 ),
               ),
+              trailing: IconButton(
+                icon: const Icon(Icons.share_outlined, size: 27.5),
+                tooltip: 'share video to classes',
+                onPressed: () async {
+                  //print('share video to classes !');
+                  bool _internet = await isInternetAvailable();
+                  if (_internet) {
+                    final KCircularProgress cp =
+                        KCircularProgress(ctx: context);
+                    cp.showCircularProgress();
+                    var pList = await getPlalistIdTitle();
+                    //pList.forEach((item) => print('${item['title'] as String} and ${item['id'] as String}'));
+                    if (pList != null && pList.length > 0) {
+                      var pmv = await yServ.getPlaylistMatchingVideo(
+                          pList, item.videoId);
+                      //print('pmv --> ${pmv.toString()}');
+                      if (pmv != null) {
+                        final String usrAgent =
+                            Provider.of<VideoItemModel>(context, listen: false)
+                                .userAgent;
+                        cp.closeProgress();
+                        kDAlert(
+                            context,
+                            _MultiSelectClassForm(
+                                preClassId: pmv,
+                                onSuccessfulUpdate: (String value) {
+                                  //print("hey it's $value");
+                                  Scaffold.of(context)
+                                      .showSnackBar(kSnackbar("$value"));
+                                },
+                                videoId: item.videoId,
+                                userAgent: usrAgent,
+                                videoTitle: item.title));
+                      } else {
+                        cp.closeProgress();
+                        print('pmv null or empty !');
+                      }
+                    } else {
+                      cp.closeProgress();
+                      print('pList null or empty !');
+                    }
+                  } else {
+                    kAlert(context, noInternetWidget);
+                  }
+                },
+              ),
+              isThreeLine: true,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -571,6 +659,9 @@ class StudyVideoBody extends StatelessWidget {
                     onPressed: () {
                       //print('Remove Video --> ${item.title} & ${item.videoId}');
                       kDAlert(context, _removeVideoAlertW(context, item));
+                      //String jsonData =
+                      //    await cacheServ.getJsonData('classesAndIds');
+                      //print('from remove --> $jsonData');
                     },
                     style: ButtonStyle(
                       foregroundColor: MaterialStateProperty.all<Color>(
@@ -1096,7 +1187,8 @@ class StudyRecycleVideoAppBar extends StatelessWidget
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            Text('Old video:'),
+            Text(
+                'Old video:  ${context.watch<VideoRecycleItemModel>().totalResults > 0 ? '(${context.watch<VideoRecycleItemModel>().totalResults})' : ''}'),
             Text('$className', style: TextStyle(fontSize: 17.5))
           ]),
       actions: <Widget>[
@@ -1177,15 +1269,15 @@ class StudyRecycleVideoAppBar extends StatelessWidget
 
 class StudyRecycleVideo extends StatelessWidget {
   final String className;
-  final String classId;
-  final String playlistId;
+  //final String classId;
+  //final String playlistId;
   final String userAgent;
   final Function(String) onSuccessfulRecycle;
   StudyRecycleVideo(
       {Key key,
       @required this.className,
-      @required this.classId,
-      @required this.playlistId,
+      //@required this.classId,
+      //@required this.playlistId,
       @required this.userAgent,
       @required this.onSuccessfulRecycle})
       : super(key: key);
@@ -1197,9 +1289,10 @@ class StudyRecycleVideo extends StatelessWidget {
       child: Scaffold(
         appBar: StudyRecycleVideoAppBar(className: className),
         body: StudyRecycleVideoBody(
-            playlistId: playlistId,
+            className: className,
+            //playlistId: playlistId,
             userAgent: userAgent,
-            classId: classId,
+            //classId: classId,
             onSuccessfulRecycle: onSuccessfulRecycle),
       ),
     );
@@ -1231,6 +1324,10 @@ class VideoRecycleItemModel with ChangeNotifier {
 
   String get nextPageToken => _nextPageToken;
 
+  int _totalResults = 0;
+
+  int get totalResults => _totalResults;
+
   //String _classRplayListID = null;
 
   //String get classRplayListID => _classRplayListID;
@@ -1245,7 +1342,8 @@ class VideoRecycleItemModel with ChangeNotifier {
     //  print('rPlaylistId from ui --> $_playlistId');
     //  _classRplayListID = _playlistId;
     //}
-    var _classRplayListID = yServ.recycleBinPlaylistId;
+    //var _classRplayListID = yServ.recycleBinPlaylistId;
+    var _classRplayListID = await yServ.getUserChannelUploadPlaylistId();
 
     yServ
         .getYtPlaylistItem(_classRplayListID, pageToken)
@@ -1276,6 +1374,7 @@ class VideoRecycleItemModel with ChangeNotifier {
             _rVideoItems.add(vi);
           }
         }
+        _totalResults = _jsonResp['totalResults'] as int;
       }
       _isWaiting = false;
       notifyListeners();
@@ -1293,18 +1392,32 @@ class VideoRecycleItemModel with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  int get getItemCount => _rVideoItems.length;
+
+  void modifyItem(_VideoItem oldItem, _VideoItem newItem) {
+    int index = _rVideoItems.indexOf(oldItem);
+    if (index != null) {
+      if (_rVideoItems.remove(oldItem)) {
+        _rVideoItems.insert(index, newItem);
+        notifyListeners();
+      }
+    }
+  }
 }
 
 class StudyRecycleVideoBody extends StatelessWidget {
-  final String playlistId;
+  final String className;
+  //final String playlistId;
   final String userAgent;
-  final String classId;
+  //final String classId;
   final Function(String) onSuccessfulRecycle;
   StudyRecycleVideoBody(
       {Key key,
-      @required this.playlistId,
+      @required this.className,
+      //@required this.playlistId,
       @required this.userAgent,
-      @required this.classId,
+      //@required this.classId,
       @required this.onSuccessfulRecycle})
       : super(key: key);
 
@@ -1326,64 +1439,78 @@ class StudyRecycleVideoBody extends StatelessWidget {
   //      .reloadPlaylist(classId);
   //}
 
-  AlertDialog _recycleVideoAlertW(BuildContext context, _VideoItem item) =>
-      AlertDialog(
-        title: Text('Are you sure to put back: ${item.title}'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-        ),
-        titleTextStyle: TextStyle(
-          color: Colors.black,
-          fontWeight: FontWeight.w500,
-          fontSize: 17,
-        ),
-        elevation: 15,
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.done),
-            iconSize: 27,
-            onPressed: () async {
-              final KCircularProgress cp = KCircularProgress(ctx: context);
-              cp.showCircularProgress();
-              //print('playlistId --> $playlistId');
-              //print('recycle video item --> ${item.videoId}, ${item.id}');
-              bool _isDel =
-                  await yServ.removeYtVideoFromPlaylist(item.id, userAgent);
-              if (_isDel) {
-                String _isPSet = await yServ.setYtVideoToPlaylist(
-                    playlistId, item.videoId, userAgent);
-                if (_isPSet != null) {
-                  Provider.of<VideoRecycleItemModel>(context, listen: false)
-                      .removeItem(item);
-                  onSuccessfulRecycle(_isPSet);
-                  cp.closeProgress();
-                  Navigator.pop(context);
-                  Scaffold.of(context).showSnackBar(
-                      kSnackbar('Video recycled successfully..!!'));
-                } else {
-                  cp.closeProgress();
-                  //print('error in set playlist');
-                  Scaffold.of(context)
-                      .showSnackBar(kSnackbar('Set to playlist unsuccessful'));
-                }
-              } else {
-                cp.closeProgress();
-                //print('error in delete from playlist');
-                Scaffold.of(context).showSnackBar(
-                    kSnackbar('Delete from Playlist unsuccessful'));
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.clear),
-            iconSize: 27,
-            onPressed: () {
-              // print('Nav Pop');
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      );
+  Future<List<dynamic>> getPlalistIdTitle() async {
+    String data = await fileServ.readDataByKey('classesAndPlaylistId');
+    if (data != 'nil') {
+      var _jsonArr = null;
+      try {
+        _jsonArr = convert.jsonDecode(data) as List;
+      } on FormatException catch (e) {
+        print('_validatePlaylistUpdate data = $data and error = $e');
+      }
+      return _jsonArr;
+    }
+    return null;
+  }
+
+  //AlertDialog _recycleVideoAlertW(BuildContext context, _VideoItem item) =>
+  //    AlertDialog(
+  //      title: Text('Are you sure to put back: ${item.title}'),
+  //      shape: RoundedRectangleBorder(
+  //        borderRadius: BorderRadius.all(Radius.circular(10)),
+  //      ),
+  //      titleTextStyle: TextStyle(
+  //        color: Colors.black,
+  //        fontWeight: FontWeight.w500,
+  //        fontSize: 17,
+  //      ),
+  //      elevation: 15,
+  //      actions: <Widget>[
+  //        IconButton(
+  //          icon: const Icon(Icons.done),
+  //          iconSize: 27,
+  //          onPressed: () async {
+  //            final KCircularProgress cp = KCircularProgress(ctx: context);
+  //            cp.showCircularProgress();
+  //            //print('playlistId --> $playlistId');
+  //            //print('recycle video item --> ${item.videoId}, ${item.id}');
+  //            bool _isDel =
+  //                await yServ.removeYtVideoFromPlaylist(item.id, userAgent);
+  //            if (_isDel) {
+  //              String _isPSet = await yServ.setYtVideoToPlaylist(
+  //                  playlistId, item.videoId, userAgent);
+  //              if (_isPSet != null) {
+  //                Provider.of<VideoRecycleItemModel>(context, listen: false)
+  //                    .removeItem(item);
+  //                onSuccessfulRecycle(_isPSet);
+  //                cp.closeProgress();
+  //                Navigator.pop(context);
+  //                Scaffold.of(context).showSnackBar(
+  //                    kSnackbar('Video recycled successfully..!!'));
+  //              } else {
+  //                cp.closeProgress();
+  //                //print('error in set playlist');
+  //                Scaffold.of(context)
+  //                    .showSnackBar(kSnackbar('Set to playlist unsuccessful'));
+  //              }
+  //            } else {
+  //              cp.closeProgress();
+  //              //print('error in delete from playlist');
+  //              Scaffold.of(context).showSnackBar(
+  //                  kSnackbar('Delete from Playlist unsuccessful'));
+  //            }
+  //          },
+  //        ),
+  //        IconButton(
+  //          icon: const Icon(Icons.clear),
+  //          iconSize: 27,
+  //          onPressed: () {
+  //            // print('Nav Pop');
+  //            Navigator.pop(context);
+  //          },
+  //        ),
+  //      ],
+  //    );
 
   Card _loadingTile(String msg) => Card(
         color: Colors.orange[300],
@@ -1417,51 +1544,159 @@ class StudyRecycleVideoBody extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
         ),
-        child: ListTile(
-            title: Text(
-              item.title,
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            leading: CircleAvatar(
-              child: Text(
-                (item.position + 1).toString(),
+        child: Column(
+          children: <Widget>[
+            ListTile(
+              title: Text(
+                item.title,
                 style: TextStyle(
                   color: Colors.black87,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            trailing: IconButton(
-              icon: Icon(Icons.update_rounded),
-              tooltip: 'recycle back',
-              onPressed: () {
-                //String _rPlaylistId =
-                //    Provider.of<VideoRecycleItemModel>(context, listen: false)
-                //        .classRplayListID;
-                //print('recycle video item --> ${item.videoId}, ${item.id}');
-                //print('rPlaylistId --> $_rPlaylistId');
-                //print('playlistId --> $_playlistId');
-                kDAlert(context, _recycleVideoAlertW(context, item));
-              },
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 5.0),
-              child: Text(
-                '<status - ${item.status}>',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w400,
+              leading: CircleAvatar(
+                child: Text(
+                  (item.position + 1).toString(),
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+              trailing: IconButton(
+                icon: const Icon(Icons.share_outlined, size: 27.5),
+                tooltip: 'share video to classes',
+                onPressed: () async {
+                  //String _rPlaylistId =
+                  //    Provider.of<VideoRecycleItemModel>(context, listen: false)
+                  //        .classRplayListID;
+                  //print('recycle video item --> ${item.videoId}, ${item.id}');
+                  //print('rPlaylistId --> $_rPlaylistId');
+                  //print('playlistId --> $_playlistId');
+
+                  //kDAlert(context, _recycleVideoAlertW(context, item));
+                  bool _internet = await isInternetAvailable();
+                  if (_internet) {
+                    final KCircularProgress cp =
+                        KCircularProgress(ctx: context);
+                    cp.showCircularProgress();
+                    var pList = await getPlalistIdTitle();
+                    //pList.forEach((item) => print('${item['title'] as String} and ${item['id'] as String}'));
+                    if (pList != null && pList.length > 0) {
+                      var pmv = await yServ.getPlaylistMatchingVideo(
+                          pList, item.videoId);
+                      //print('pmv --> ${pmv.toString()}');
+                      if (pmv != null) {
+                        //final String usrAgent =
+                        //    Provider.of<VideoItemModel>(context, listen: false)
+                        //        .userAgent;
+                        cp.closeProgress();
+                        kDAlert(
+                            context,
+                            _MultiSelectClassForm(
+                                preClassId: pmv,
+                                onSuccessfulUpdate: (String value) {
+                                  //print("hey it's $value");
+                                  Scaffold.of(context)
+                                      .showSnackBar(kSnackbar("$value"));
+                                  onSuccessfulRecycle('ok');
+                                },
+                                videoId: item.videoId,
+                                userAgent: userAgent,
+                                videoTitle: item.title));
+                      } else {
+                        cp.closeProgress();
+                        print('pmv null or empty !');
+                      }
+                    } else {
+                      cp.closeProgress();
+                      print('pList null or empty !');
+                    }
+                  } else {
+                    kAlert(context, noInternetWidget);
+                  }
+                },
+              ),
+              isThreeLine: true,
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 5.0),
+                child: Text(
+                  '<status - ${item.status}>',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+              //onTap: () async {
+              //  //print(
+              //  //    'play video item and status --> ${item.videoId} and ${item.status}');
+              //  //await _playYtVideo(item.videoId);
+              //}
             ),
-            onTap: () async {
-              //print(
-              //    'play video item and status --> ${item.videoId} and ${item.status}');
-              await _playYtVideo(item.videoId);
-            }),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  TextButton(
+                    child: const Text('|> Play'),
+                    onPressed: () async {
+                      //print('Play Video --> ${item.title} & ${item.videoId}');
+                      //await _playYtVideo(item.videoId);
+                      await _playYtVideo(item.videoId);
+                    },
+                    style: ButtonStyle(
+                      foregroundColor: MaterialStateProperty.all<Color>(
+                          Colors.black.withOpacity(0.465)),
+                      textStyle: MaterialStateProperty.all<TextStyle>(TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      )),
+                    ),
+                  ),
+                  //Spacer(),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.25,
+                  ),
+                  TextButton(
+                    child: const Text('/ Edit'),
+                    onPressed: () async {
+                      //print('Edit Video --> ${item.title} & ${item.videoId}');
+                      //final String usrAgent =
+                      //    Provider.of<VideoItemModel>(context, listen: false)
+                      //        .userAgent;
+                      //print('userAgent --> $userAgent');
+
+                      kDAlert(
+                          context,
+                          VideoTitleEditForm(
+                              vItem: item,
+                              className: className,
+                              userAgent: userAgent,
+                              onSuccessfulUpdate: (_VideoItem vi) async {
+                                //print(
+                                //    'onSuccessfulUpload --> ${vi.toString()}');
+                                Provider.of<VideoRecycleItemModel>(context,
+                                        listen: false)
+                                    .modifyItem(item, vi);
+                              }));
+                    },
+                    style: ButtonStyle(
+                      foregroundColor: MaterialStateProperty.all<Color>(
+                          Colors.black.withOpacity(0.46)),
+                      textStyle: MaterialStateProperty.all<TextStyle>(TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      )),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 
   Widget _videoList(BuildContext context) =>
@@ -1483,8 +1718,11 @@ class StudyRecycleVideoBody extends StatelessWidget {
                     if (snapshot.rVideoItems.isEmpty) {
                       return _loadingTile('No Video Items !');
                     } else {
-                      return ListView.builder(
+                      return ListView.separated(
                           itemCount: snapshot.rVideoItems.length,
+                          separatorBuilder: (context, index) => Divider(
+                                height: 4.2,
+                              ),
                           itemBuilder: (context, index) => _studyClassVideoTile(
                               context, snapshot.rVideoItems[index]));
                     }
@@ -1499,4 +1737,343 @@ class StudyRecycleVideoBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return _videoList(context);
   }
+}
+
+class _MultiSelectClassForm extends StatefulWidget {
+  final List<String> preClassId;
+  final Function(String) onSuccessfulUpdate;
+  final String videoId;
+  final String userAgent;
+  final String videoTitle;
+  _MultiSelectClassForm(
+      {Key key,
+      @required this.preClassId,
+      @required this.onSuccessfulUpdate,
+      @required this.videoId,
+      @required this.userAgent,
+      @required this.videoTitle})
+      : super(key: key);
+
+  @override
+  _MultiSelectClassFormState createState() => _MultiSelectClassFormState();
+}
+
+class _MultiSelectClassFormState extends State<_MultiSelectClassForm> {
+  final List<_ClassListModel> _classList = [];
+  var _currentState = 'loading';
+  var _showMessage = false;
+  var _dialogMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    String data = await fileServ.readDataByKey('classesAndIds');
+    if (data != 'nil') {
+      var _jsonArr = null;
+      try {
+        _jsonArr = convert.jsonDecode(data) as List;
+        //List<_ClassListModel> _tags =
+        //    _jsonArr.map((tagJson) => _ClassListModel.fromJson(tagJson)).toList();
+      } on FormatException catch (e) {
+        print('data = $data and error = $e');
+        setState(() {
+          _currentState = 'empty';
+          _dialogMessage = 'Error !';
+          _showMessage = true;
+        });
+      }
+      if (_jsonArr != null && _jsonArr.length > 0) {
+        setState(() {
+          for (final tag in _jsonArr) {
+            var clId = tag['classId'] as String;
+            var isMatch = widget.preClassId.contains(clId);
+            var clm = _ClassListModel.fromJson(tag, isEditable: !isMatch);
+            _classList.add(clm);
+          }
+          _currentState = 'ok';
+        });
+      }
+    } else {
+      setState(() {
+        _currentState = 'empty';
+        _dialogMessage = 'Error !';
+        _showMessage = true;
+      });
+    }
+  }
+
+  void setValueForClass(int index, bool value) {
+    setState(() {
+      //_classList[index].boolValue = value;
+      _classList[index].setBoolvalue(value);
+    });
+  }
+
+  Widget _getMessageWidget(String message) => Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: Text('$message',
+              style:
+                  const TextStyle(fontWeight: FontWeight.w500, fontSize: 17.0)),
+        ),
+      );
+
+  CheckboxListTile _checkBoxListTile(_ClassListModel clm, int index) =>
+      CheckboxListTile(
+        title: Text(
+          '${clm.className}',
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.9,
+          ),
+        ),
+        selected: !clm.isEditable,
+        value: clm.boolValue,
+        onChanged: (bool value) {
+          setValueForClass(index, value);
+          //setState(() {
+          //  clm.boolValue(value);
+          //});
+        },
+        //secondary: const Icon(Icons.fact_check),
+        activeColor: Colors.lightBlue[600],
+        dense: true,
+      );
+
+  Widget _getCurrentStateWidget(String stateValue) {
+    switch (stateValue) {
+      case 'ok':
+        return ListView.separated(
+          shrinkWrap: true,
+          itemCount: _classList.length,
+          itemBuilder: (context, index) =>
+              _checkBoxListTile(_classList[index], index),
+          separatorBuilder: (context, index) => Divider(
+            height: 4.2,
+          ),
+        );
+        break;
+      case 'empty':
+        return _getMessageWidget('No value...');
+        break;
+      default:
+        return _getMessageWidget('Loading...');
+    }
+  }
+
+  Future<String> _validatePlaylistUpdate() async {
+    final List<_ClassListModel> classListUpdated = [];
+    for (final clm in _classList) {
+      if (clm.isEditable && clm.boolValue) {
+        //print(clm.toString());
+        classListUpdated.add(clm);
+      }
+    }
+    if (classListUpdated.length > 0) {
+      //print(classListUpdated.toString());
+      String data = await fileServ.readDataByKey('classesAndPlaylistId');
+      //print('data --> $data');
+      if (data != 'nil') {
+        var _jsonArr = null;
+        try {
+          _jsonArr = convert.jsonDecode(data) as List;
+        } on FormatException catch (e) {
+          print('_validatePlaylistUpdate data = $data and error = $e');
+        }
+        if (_jsonArr != null && _jsonArr.length > 0) {
+          final List<_ClassPlaylistIdModel> cplm = [];
+          for (final clm in classListUpdated) {
+            for (final tag in _jsonArr) {
+              if (clm.classId == tag['title'] as String) {
+                //print('${clm.toString()} --> ${tag.toString()}');
+                cplm.add(
+                    _ClassPlaylistIdModel(clm.className, tag['id'] as String));
+                break;
+              }
+            }
+          }
+          var resStr = convert.jsonEncode(cplm);
+          return resStr;
+        }
+      } else {
+        setState(() {
+          _dialogMessage = 'Error !';
+          _showMessage = true;
+        });
+      }
+    } else {
+      setState(() {
+        _dialogMessage = 'No change !';
+        _showMessage = true;
+      });
+    }
+    return 'no';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Container(
+        child: ListTile(
+          title: const Text('Select Class :',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+                fontSize: 17,
+              )),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Text('Video : ${widget.videoTitle}',
+                style: const TextStyle(color: Colors.black, fontSize: 16)),
+          ),
+          trailing: const Icon(
+            Icons.arrow_downward,
+            size: 27.0,
+          ),
+          //tileColor: Colors.yellow,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(width: 2.0, color: Colors.grey),
+          ),
+        ),
+      ),
+      content: Container(
+        width: double.maxFinite,
+        child: _getCurrentStateWidget(_currentState),
+      ),
+      actions: <Widget>[
+        Visibility(
+          visible: _showMessage,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 30.0),
+            child: Text('$_dialogMessage',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 15.0,
+                  fontWeight: FontWeight.w500,
+                )),
+          ),
+        ),
+        Visibility(
+          visible: _currentState == 'ok',
+          child: Padding(
+            padding: const EdgeInsets.only(right: 30.0),
+            child: ElevatedButton(
+              onPressed: () async {
+                //print('save class list !');
+                setState(() {
+                  _dialogMessage = '';
+                  _showMessage = false;
+                });
+                var msg = await _validatePlaylistUpdate();
+                if (msg != 'no') {
+                  final KCircularProgress cp = KCircularProgress(ctx: context);
+                  cp.showCircularProgress();
+                  var errorClassList = await yServ.setYtVideoToMultiplePlaylist(
+                      msg, widget.videoId, widget.userAgent);
+                  if (errorClassList.length == 0) {
+                    widget.onSuccessfulUpdate('Update successfully !');
+                  } else {
+                    print('errorClassList --> ${errorClassList.toString()}');
+                    widget.onSuccessfulUpdate('Error while update !');
+                  }
+                  cp.closeProgress();
+                  Navigator.of(context).pop();
+                  //print('msg --> $msg');
+                }
+              },
+              child: const Text('Save',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  )),
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+                shape: MaterialStateProperty.all<OutlinedBorder>(
+                    RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                )),
+              ),
+            ),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Close',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              )),
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+            shape: MaterialStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            )),
+          ),
+        ),
+      ],
+      buttonPadding: const EdgeInsets.only(right: 7.0),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+      clipBehavior: Clip.none,
+      insetPadding: const EdgeInsets.all(8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      //actionsOverflowButtonSpacing: 20.0,
+      backgroundColor: Colors.indigo.shade50,
+    );
+  }
+}
+
+class _ClassListModel {
+  final String className;
+  final String classId;
+  final bool isEditable;
+  bool _boolValue = false;
+
+  _ClassListModel(this.className, this.classId, this.isEditable,
+      {boolValue: false})
+      : _boolValue = boolValue;
+
+  //String get className => _className;
+
+  factory _ClassListModel.fromJson(dynamic json, {isEditable: true}) {
+    return _ClassListModel(
+        json['className'] as String, json['classId'] as String, isEditable,
+        boolValue: !isEditable);
+  }
+
+  bool get boolValue => _boolValue;
+
+  void setBoolvalue(bool value) {
+    if (this.isEditable) {
+      this._boolValue = value;
+    }
+  }
+
+  @override
+  String toString() {
+    return '{${this.classId}, ${this.className}, ${this.boolValue}, isEditable: ${this.isEditable}}';
+  }
+}
+
+class _ClassPlaylistIdModel {
+  final String _className;
+  final String _playlistId;
+
+  _ClassPlaylistIdModel(this._className, this._playlistId);
+
+  Map toJson() => {
+        'className': _className,
+        'playlistId': _playlistId,
+      };
 }

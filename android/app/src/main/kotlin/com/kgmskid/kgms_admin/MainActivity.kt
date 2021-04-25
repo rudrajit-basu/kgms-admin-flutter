@@ -19,7 +19,6 @@ import com.google.android.youtube.player.YouTubeStandalonePlayer
 class MainActivity: FlutterActivity() {
 	private val CHANNEL = "flutter.kgmskid.kgms_admin/firestorage"
 	private val storage = Firebase.storage
-//	private val ytApiKey = "AIzaSyCjyx-Y-2yupi_mGz9YeaZvdGwutVM7LTw"
 	private val ytApiKey = "AIzaSyDOEOPl4c9-au6ZbRcoGTtkr3tmI9dwG9U"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
@@ -52,9 +51,9 @@ class MainActivity: FlutterActivity() {
 	      }
 
 	      if(call.method == "playYoutubeVideo"){
-	      	println("playYoutubeVideo method called !")
+	      	//println("playYoutubeVideo method called !")
 	      	val videoId = call.arguments as String
-	      	println("videoId from kt --> $videoId")
+	      	//println("videoId from kt --> $videoId")
 	      	val intent = YouTubeStandalonePlayer.createVideoIntent(this, ytApiKey, videoId, 0, false, true)
 	      	startActivity(intent)
 	      	result.success(true)

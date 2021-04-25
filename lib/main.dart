@@ -5,6 +5,10 @@ import 'studyUi.dart';
 import 'self.dart';
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
+import 'admissionUi.dart';
+import 'accountsUi.dart';
+import 'studentsUi.dart';
+import 'studyVoiceItemsUi.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -377,12 +381,20 @@ class KgmsMain extends StatelessWidget {
   //     (i) => _buildMainButtons(i));
 
   List<FloatingActionButton> _buildButtonList(BuildContext ctx) {
-    List<FloatingActionButton> fabList = new List();
+    //List<FloatingActionButton> fabList = new List();
+    final List<FloatingActionButton> fabList = [];
     fabList
-        .add(_buildMainButtons(ctx, 'Events', KgmsEvents(), Icons.event, true));
+        .add(_buildMainButtons(ctx, 'Event', KgmsEvents(), Icons.event, true));
+    fabList.add(_buildMainButtons(
+        ctx, 'Class', KgmsClassStudy(), Icons.meeting_room_rounded, true));
+    //fabList.add(_buildMainButtons(
+    //    ctx, 'Amission', KgmsAdmission(), Icons.business, false));
+    //fabList.add(_buildMainButtons(
+    //    ctx, 'Accounts', KgmsAccounts(), Icons.account_balance, false));
     fabList.add(
-        _buildMainButtons(ctx, 'Class', KgmsClassStudy(), Icons.face, true));
-    // fabList.add(_buildMainButtons(ctx, 'Accounts', null, Icons.business));
+        _buildMainButtons(ctx, 'Students', KgmsStudents(), Icons.face, false));
+    fabList.add(_buildMainButtons(
+        ctx, 'Voice', StudyVoice(), Icons.keyboard_voice, false));
     return fabList;
   }
 
@@ -410,7 +422,7 @@ class KgmsMain extends StatelessWidget {
                 'Welcome ~ \n\n $userN',
                 style: TextStyle(
                   color: Colors.black87,
-                  fontSize: 22,
+                  fontSize: 20,
                 ),
               ),
             ),
@@ -426,9 +438,26 @@ class KgmsMain extends StatelessWidget {
             //         print("uid = null");
             //       }
             //     }),
+            SizedBox(
+              height: 10.0,
+            ),
             ListTile(
-                leading: Icon(Icons.exit_to_app),
-                title: const Text('Sign Out'),
+                leading: const Icon(Icons.settings, size: 27),
+                title: const Text('Settings',
+                    style: TextStyle(fontSize: 16, letterSpacing: 0.4)),
+                enabled: true,
+                onTap: () async {
+                  //print('app settings');
+                  //Navigator.pop(context);
+                  //kDAlert(context, _KgmsSettingsDialog());
+                }),
+            SizedBox(
+              height: 15.0,
+            ),
+            ListTile(
+                leading: const Icon(Icons.exit_to_app, size: 27),
+                title: const Text('Sign Out',
+                    style: TextStyle(fontSize: 16, letterSpacing: 0.4)),
                 enabled: true,
                 onTap: () async {
                   bool _internet = await isInternetAvailable();
@@ -455,7 +484,7 @@ class KgmsMain extends StatelessWidget {
             primary: true,
             padding: const EdgeInsets.all(15),
             crossAxisSpacing: 20,
-            mainAxisSpacing: 10,
+            mainAxisSpacing: 20,
             crossAxisCount: orientation == Orientation.portrait ? 2 : 3,
             children: _buildButtonList(context),
           );
@@ -482,4 +511,115 @@ Route _createRoute(StatelessWidget slw) {
       );
     },
   );
+}
+
+class _KgmsSettingsDialog extends StatefulWidget {
+  _KgmsSettingsDialog({Key key}) : super(key: key);
+
+  @override
+  _KgmsSettingsDialogState createState() => _KgmsSettingsDialogState();
+}
+
+class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Container(
+        child: ListTile(
+          title: const Text('Settings',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+                fontSize: 17,
+              )),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Text('Accounts',
+                style: TextStyle(color: Colors.black, fontSize: 16)),
+          ),
+          trailing: const Icon(
+            Icons.settings,
+            size: 27.0,
+          ),
+          //tileColor: Colors.yellow,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(width: 2.0, color: Colors.grey),
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        Container(
+          width: double.maxFinite,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                onPressed: () {
+                  print('save');
+                },
+                child: const Text('Save',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    )),
+                style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Colors.green),
+                  shape: MaterialStateProperty.all<OutlinedBorder>(
+                      RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  )),
+                ),
+              ),
+              SizedBox(
+                width: 30.0,
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    )),
+                style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Colors.green),
+                  shape: MaterialStateProperty.all<OutlinedBorder>(
+                      RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  )),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      buttonPadding: const EdgeInsets.only(right: 7.0),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+      clipBehavior: Clip.none,
+      insetPadding: const EdgeInsets.all(8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      //actionsOverflowButtonSpacing: 20.0,
+      backgroundColor: Colors.indigo.shade50,
+    );
+  }
 }
