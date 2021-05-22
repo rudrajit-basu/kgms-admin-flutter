@@ -679,57 +679,57 @@ class StudyVideoBody extends StatelessWidget {
         ),
       );
 
-  Card _studyClassVideoTile(BuildContext context, _VideoItem item) => Card(
-        color: Colors.orange[300],
-        elevation: 10,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-        child: ListTile(
-            title: Text(
-              item.title,
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            leading: CircleAvatar(
-              child: Text(
-                (item.position + 1).toString(),
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            trailing: IconButton(
-              icon: Icon(Icons.delete_forever),
-              tooltip: 'remove video',
-              onPressed: () {
-                //String _playlistId =
-                //    Provider.of<VideoItemModel>(context, listen: false)
-                //        .classPlayListID;
-                //print('remove video item --> ${item.videoId}, ${item.id}');
-                //print('playlistId --> $_playlistId');
-                kDAlert(context, _removeVideoAlertW(context, item));
-              },
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 5.0),
-              child: Text(
-                '<status - ${item.status}>',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-            onTap: () async {
-              //print(
-              //    'play video item and status --> ${item.videoId} and ${item.status}');
-              await _playYtVideo(item.videoId);
-            }),
-      );
+  //Card _studyClassVideoTile(BuildContext context, _VideoItem item) => Card(
+  //      color: Colors.orange[300],
+  //      elevation: 10,
+  //      shape: RoundedRectangleBorder(
+  //        borderRadius: BorderRadius.all(Radius.circular(8)),
+  //      ),
+  //      child: ListTile(
+  //          title: Text(
+  //            item.title,
+  //            style: TextStyle(
+  //              color: Colors.black87,
+  //              fontWeight: FontWeight.w500,
+  //            ),
+  //          ),
+  //          leading: CircleAvatar(
+  //            child: Text(
+  //              (item.position + 1).toString(),
+  //              style: TextStyle(
+  //                color: Colors.black87,
+  //                fontWeight: FontWeight.w600,
+  //              ),
+  //            ),
+  //          ),
+  //          trailing: IconButton(
+  //            icon: Icon(Icons.delete_forever),
+  //            tooltip: 'remove video',
+  //            onPressed: () {
+  //              //String _playlistId =
+  //              //    Provider.of<VideoItemModel>(context, listen: false)
+  //              //        .classPlayListID;
+  //              //print('remove video item --> ${item.videoId}, ${item.id}');
+  //              //print('playlistId --> $_playlistId');
+  //              kDAlert(context, _removeVideoAlertW(context, item));
+  //            },
+  //          ),
+  //          subtitle: Padding(
+  //            padding: const EdgeInsets.only(top: 5.0),
+  //            child: Text(
+  //              '<status - ${item.status}>',
+  //              style: TextStyle(
+  //                color: Colors.black87,
+  //                fontWeight: FontWeight.w400,
+  //              ),
+  //            ),
+  //          ),
+  //          onTap: () async {
+  //            //print(
+  //            //    'play video item and status --> ${item.videoId} and ${item.status}');
+  //            await _playYtVideo(item.videoId);
+  //          }),
+  //    );
 
   Widget unlistedVideosWidget(BuildContext context) =>
       Consumer<VideoItemModel>(builder: (context, snapshot, _) {
@@ -790,14 +790,21 @@ class VideoTitleEditForm extends StatefulWidget {
 }
 
 class _VideoTitleEditFormState extends State<VideoTitleEditForm> {
-  TextEditingController _vTitleCtrl;
+  final TextEditingController _vTitleCtrl = TextEditingController();
   String _updateIssue;
 
   @override
   void initState() {
     super.initState();
-    _vTitleCtrl = TextEditingController(text: widget.vItem.title);
+    //_vTitleCtrl = TextEditingController(text: widget.vItem.title);
+    _vTitleCtrl.text = widget.vItem.title;
     _updateIssue = "";
+  }
+
+  @override
+  void dispose() {
+    _vTitleCtrl.dispose();
+    super.dispose();
   }
 
   void setDialogMsg(String msg) => setState(() {
@@ -831,15 +838,21 @@ class _VideoTitleEditFormState extends State<VideoTitleEditForm> {
                 ),
               ),
               Expanded(
-                child: TextField(
-                  controller: _vTitleCtrl,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                child: Theme(
+                  data: ThemeData(
+                    primaryColor: Colors.blueAccent,
                   ),
-                  maxLines: 4,
-                  minLines: 1,
+                  child: TextField(
+                    controller: _vTitleCtrl,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 5, horizontal: 10),
+                    ),
+                    maxLines: 4,
+                    minLines: 1,
+                    cursorColor: Colors.blue,
+                  ),
                 ),
               ),
             ],
@@ -1005,15 +1018,21 @@ class _VideoFilePickerFormState extends State<VideoFilePickerForm> {
                 ),
               ),
               Expanded(
-                child: TextField(
-                  controller: _fileNameCtrl,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                child: Theme(
+                  data: ThemeData(
+                    primaryColor: Colors.blueAccent,
                   ),
-                  maxLines: 4,
-                  minLines: 1,
+                  child: TextField(
+                    controller: _fileNameCtrl,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 5, horizontal: 10),
+                    ),
+                    maxLines: 4,
+                    minLines: 1,
+                    cursorColor: Colors.blue,
+                  ),
                 ),
               ),
               Text(' $_filePathExt'),
@@ -1036,6 +1055,10 @@ class _VideoFilePickerFormState extends State<VideoFilePickerForm> {
             setDialogMsg('Please wait...');
             String filePath =
                 await FilePicker.getFilePath(type: FileType.video);
+            //FilePickerResult fpResult =
+            //    await FilePicker.platform.pickFiles(type: FileType.video);
+
+            //String filePath = fpResult != null ? fpResult.files.single.path : null;
             if (filePath != null && filePath.isNotEmpty) {
               setState(() {
                 _fullFilePath = filePath;

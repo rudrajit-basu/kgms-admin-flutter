@@ -411,15 +411,21 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
                 ),
               ),
               Expanded(
-                child: TextField(
-                  controller: _fileNameCtrl,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                child: Theme(
+                  data: ThemeData(
+                    primaryColor: Colors.blueAccent,
                   ),
-                  maxLines: 4,
-                  minLines: 1,
+                  child: TextField(
+                    controller: _fileNameCtrl,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 5, horizontal: 10),
+                    ),
+                    maxLines: 4,
+                    minLines: 1,
+                    cursorColor: Colors.blue,
+                  ),
                 ),
               ),
               Text(' $_filePathExt'),
@@ -444,6 +450,11 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
             });
             String filePath =
                 await FilePicker.getFilePath(type: FileType.image);
+
+            //FilePickerResult fpResult =
+            //    await FilePicker.platform.pickFiles(type: FileType.image);
+
+            //String filePath = fpResult != null ? fpResult.files.single.path : null;
 
             if (filePath != null && filePath.isNotEmpty) {
               setState(() {

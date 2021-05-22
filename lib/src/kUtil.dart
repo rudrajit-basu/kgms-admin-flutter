@@ -185,3 +185,35 @@ SnackBar kSnackbar(String msg) => SnackBar(
       backgroundColor: Colors.lightBlue,
       duration: Duration(seconds: 2),
     );
+
+AlertDialog showErrorWidget(String msg) => AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+      ),
+      title: Center(
+        child: ListTile(
+          leading: const Icon(
+              Icons.error_outline_rounded, //report_problem priority_high
+              color: Colors.black,
+              size: 32),
+          title: Text(
+            '$msg',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.w500,
+              fontSize: 17,
+            ),
+          ),
+          subtitle: const Padding(
+            padding: const EdgeInsets.only(top: 12.0),
+            child: Text('Something went wrong. Try later...!!'),
+          ),
+        ),
+      ),
+      titleTextStyle: const TextStyle(
+        color: Colors.black,
+        fontWeight: FontWeight.w600,
+      ),
+      elevation: 15,
+      // contentPadding: const EdgeInsets.all(5),
+    );

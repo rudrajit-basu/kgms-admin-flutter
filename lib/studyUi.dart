@@ -5,6 +5,7 @@ import 'studyMediaItemsUi.dart';
 import 'studyVideoItemsUi.dart';
 import 'dart:async';
 import 'dart:convert' as convert;
+import 'studyVoiceItemsUi.dart';
 
 //final kClassesCollectionRef = Firestore.instance.collection('kgms-classes');
 final kClassesCollectionRef =
@@ -330,7 +331,8 @@ class KgmsClassStudyMain extends StatelessWidget {
       );
 
   List<FloatingActionButton> _buildButtonList(BuildContext ctx) {
-    List<FloatingActionButton> fabList = new List();
+    //List<FloatingActionButton> fabList = new List();
+    final List<FloatingActionButton> fabList = [];
     fabList.add(_buildMainButtons(
         ctx, 'Study', KgmsStudy(), Icons.menu_book_rounded, true));
     fabList.add(_buildMainButtons(
@@ -348,6 +350,14 @@ class KgmsClassStudyMain extends StatelessWidget {
             className: _KgmsClassCurrentDoc.className,
             classId: _KgmsClassCurrentDoc.classId),
         Icons.ondemand_video_rounded,
+        true));
+    fabList.add(_buildMainButtons(
+        ctx,
+        'Voice',
+        StudyVoiceWrapper(
+            className: _KgmsClassCurrentDoc.className,
+            classId: _KgmsClassCurrentDoc.classId),
+        Icons.keyboard_voice,
         true));
     //fabList
     //    .add(_buildMainButtons(ctx, 'Diary', null, Icons.book_rounded, true));

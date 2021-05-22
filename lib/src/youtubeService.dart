@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'model/youtubeModel.dart';
 import 'localFileStorageService.dart';
+import 'dart:core';
 
 const _channelIdY = 'UCuS-pL1W9DnAgw0ju4rDOKA';
 const _playlistsYUrl = 'https://www.googleapis.com/youtube/v3/playlists';
@@ -253,7 +254,8 @@ class YoutubeServ {
     http.Response resp;
     try {
       var headers1 = _getHeaders1(tknResp.accessToken, userAgent);
-      resp = await http.Client().put(url, headers: headers1, body: jsonStr);
+      resp = await http.Client()
+          .put(Uri.parse(url), headers: headers1, body: jsonStr);
       if (resp.statusCode == 401) {
         print('_ytPutMethod status = 401');
         if (tknResp.hasRefreshToken()) {
@@ -264,7 +266,8 @@ class YoutubeServ {
 
         if (tknResp != null) {
           var headers2 = _getHeaders1(tknResp.accessToken, userAgent);
-          resp = await http.Client().put(url, headers: headers2, body: jsonStr);
+          resp = await http.Client()
+              .put(Uri.parse(url), headers: headers2, body: jsonStr);
         }
       }
       return resp;

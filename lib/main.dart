@@ -8,7 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'admissionUi.dart';
 import 'accountsUi.dart';
 import 'studentsUi.dart';
-import 'studyVoiceItemsUi.dart';
+//import 'studyVoiceItemsUi.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -391,10 +391,10 @@ class KgmsMain extends StatelessWidget {
     //    ctx, 'Amission', KgmsAdmission(), Icons.business, false));
     //fabList.add(_buildMainButtons(
     //    ctx, 'Accounts', KgmsAccounts(), Icons.account_balance, false));
-    fabList.add(
-        _buildMainButtons(ctx, 'Students', KgmsStudents(), Icons.face, false));
-    fabList.add(_buildMainButtons(
-        ctx, 'Voice', StudyVoice(), Icons.keyboard_voice, false));
+    //fabList.add(
+    //    _buildMainButtons(ctx, 'Students', KgmsStudents(), Icons.face, false));
+    //fabList.add(_buildMainButtons(
+    //    ctx, 'Voice', StudyVoiceWrapper(), Icons.keyboard_voice, false));
     return fabList;
   }
 

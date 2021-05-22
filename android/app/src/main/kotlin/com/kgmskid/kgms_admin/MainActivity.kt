@@ -16,10 +16,23 @@ import org.json.JSONObject
 import android.content.Intent
 import com.google.android.youtube.player.YouTubeStandalonePlayer
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+//import android.media.MediaPlayer
+//import android.media.MediaRecorder
+//import java.io.IOException
+//import android.net.Uri
+//import java.io.File
+//import android.content.Context
+//import android.media.AudioAttributes
+
+
 class MainActivity: FlutterActivity() {
 	private val CHANNEL = "flutter.kgmskid.kgms_admin/firestorage"
 	private val storage = Firebase.storage
 	private val ytApiKey = "AIzaSyDOEOPl4c9-au6ZbRcoGTtkr3tmI9dwG9U"
+
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine);
@@ -62,6 +75,51 @@ class MainActivity: FlutterActivity() {
 	      if(call.method == "getUserAgent"){
 	      	result.success(System.getProperty("http.agent"))
 	      }
+
+	      if(call.method == "isPermissionToRecord"){
+	      	when {
+	      		ContextCompat.checkSelfPermission(
+	      			this, 
+	      			Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED -> {
+	      			//cacheDirPath = "${externalCacheDir.absolutePath}"
+	      			result.success(true)
+	      		}
+	      		else -> {
+	      			result.success(false)
+	      		}
+	      	}
+	      }
+
+	      if(call.method == "getExtCacheDir"){
+	      	val res = "${externalCacheDir.absolutePath}"
+	      	result.success(res)
+	      }
+
+	      if(call.method == "getVoiceStorage"){
+	      	println("getVoiceStorage method called !")
+	      	val subDir = call.arguments as String
+			val listRef = storage.reference.child("kgms-voice-notes").child(subDir)
+			val jsonArr = JSONArray()
+	      	listRef.listAll()
+	      		.addOnSuccessListener { listResult ->
+	      			listResult.items.forEach { item ->
+	      			
+		      			try{
+	      					jsonArr.put(item.getName())
+	      				} catch (e: JSONException){
+	      					 println(e)
+	      					 result.error("Kotlin Side", "JSON create", null)
+	      				}
+
+	      			}
+	      			result.success(jsonArr.toString())
+	      		}
+	      		.addOnFailureListener {
+	      			result.error("Kotlin Side", "FireStorage", null)
+	      		}
+	      }
+
 	    }
     }
+
 }
