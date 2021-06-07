@@ -8,7 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'admissionUi.dart';
 import 'accountsUi.dart';
 import 'studentsUi.dart';
-//import 'studyVoiceItemsUi.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +23,7 @@ class KgmsApp extends StatelessWidget {
         future: _initialization,
         builder: (context, snapshot) {
           if (snapshot == null) {
-            return Center(
+            return const Center(
               child: Text(
                 'No internet connection !',
                 style: TextStyle(
@@ -35,7 +35,7 @@ class KgmsApp extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return Center(
+            return const Center(
               child: Text(
                 'Init Error !',
                 style: TextStyle(
@@ -47,10 +47,14 @@ class KgmsApp extends StatelessWidget {
           }
 
           if (snapshot.connectionState == ConnectionState.done) {
-            return KgmsLoginPage();
+            return ChangeNotifierProvider(
+              create: (_) => LoginModel(),
+              child: KgmsInitPage(),
+            );
+            //return KgmsLoginPage(userName: '');
           }
 
-          return Center(
+          return const Center(
             child: Text(
               'Loading.... ',
               style: TextStyle(
@@ -74,8 +78,104 @@ class KgmsApp extends StatelessWidget {
   }
 }
 
+class KgmsInitPage extends StatelessWidget {
+  const KgmsInitPage({Key key}) : super(key: key);
+
+  Widget _autoSignInWidget(BuildContext context) =>
+      Consumer<LoginModel>(builder: (context, snapshot, _) {
+        switch (snapshot.isWaiting) {
+          case true:
+            return const Scaffold(
+              body: Center(
+                child: Text(
+                  'Checking.... !',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 18.0,
+                    letterSpacing: 0.9,
+                  ),
+                ),
+              ),
+            );
+          default:
+            {
+              if (snapshot.isSignedIn) {
+                return KgmsMain(userN: snapshot.userId);
+              } else {
+                return KgmsLoginPage(userName: snapshot.userName);
+              }
+            }
+        }
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    return _autoSignInWidget(context);
+  }
+}
+
+class LoginModel with ChangeNotifier implements ReassembleHandler {
+  String _userId = '';
+
+  String get userId => _userId;
+
+  String _userName = '';
+
+  String get userName => _userName;
+
+  bool _isSignedIn = false;
+
+  bool get isSignedIn => _isSignedIn;
+
+  bool _isWaiting = true;
+
+  bool get isWaiting => _isWaiting;
+
+  LoginModel() {
+    fServ.getCurrentUser().then((uid) {
+      print('uid from getCurrentUser --> $uid');
+      if (uid != null) {
+        _userId = uid;
+        _isSignedIn = true;
+        _isWaiting = false;
+        notifyListeners();
+      } else {
+        cacheServ.getUserName().then((uName) {
+          _userName = uName;
+          _isSignedIn = false;
+          _isWaiting = false;
+          notifyListeners();
+        });
+      }
+    });
+  }
+
+  void logIn(String uName) {
+    print('user logged in --> $uName !');
+    _userId = uName;
+    _isSignedIn = true;
+    notifyListeners();
+  }
+
+  void logOut() {
+    print('user logged out --> $_userId !');
+    cacheServ.getUserName().then((uName) {
+      _userName = uName;
+      _isSignedIn = false;
+      notifyListeners();
+    });
+  }
+
+  @override
+  void reassemble() {
+    print('Did hot-reload from LoginModel !');
+  }
+}
+
 class KgmsLoginPage extends StatelessWidget {
-  KgmsLoginPage({Key key}) : super(key: key);
+  final String userName;
+  const KgmsLoginPage({Key key, @required this.userName}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +208,7 @@ class KgmsLoginPage extends StatelessWidget {
                       height: 165,
                     ),
                   ),
-                  KgmsLogin(),
+                  KgmsLogin(userName: userName),
                 ],
               ),
             ),
@@ -120,7 +220,8 @@ class KgmsLoginPage extends StatelessWidget {
 }
 
 class KgmsLogin extends StatefulWidget {
-  KgmsLogin({Key key}) : super(key: key);
+  final String userName;
+  const KgmsLogin({Key key, @required this.userName}) : super(key: key);
 
   @override
   _KgmsLoginState createState() => _KgmsLoginState();
@@ -137,29 +238,27 @@ class _KgmsLoginState extends State<KgmsLogin> {
   @override
   void initState() {
     super.initState();
-    fServ.getCurrentUser().then((uid) {
-      if (uid != null) {
-        _loginNavigate(context, KgmsMain(userN: uid));
-      } else {
-        cacheServ.getUserName().then((uName) {
-          this.setState(() {
-            _uidCtrl.text = uName;
-          });
-        });
-      }
-    });
-    //SharedPreferences.getInstance().then((prefs) {
-    //  this.setState(() {
-    //    _uidCtrl.text = prefs.getString('kUserName') ?? '';
-    //  });
+    //fServ.getCurrentUser().then((uid) {
+    //  if (uid != null) {
+    //    _loginNavigate(context, KgmsMain(userN: uid));
+    //  } else {
+    //    cacheServ.getUserName().then((uName) {
+    //      this.setState(() {
+    //        _uidCtrl.text = uName;
+    //      });
+    //    });
+    //  }
     //});
+    this.setState(() {
+      _uidCtrl.text = widget.userName;
+    });
   }
 
   @override
   void dispose() {
     _uidCtrl.dispose();
     _passwdCtrl.dispose();
-    fServ.signOut();
+    //fServ.signOut();
     // print("login disposed.....");
     super.dispose();
   }
@@ -292,7 +391,9 @@ class _KgmsLoginState extends State<KgmsLogin> {
                           });
                           String _userEmail = await fServ.getCurrentUser();
                           cp.closeProgress();
-                          _loginNavigate(context, KgmsMain(userN: _userEmail));
+                          Provider.of<LoginModel>(context, listen: false)
+                              .logIn(_userEmail);
+                          //_loginNavigate(context, KgmsMain(userN: _userEmail));
                         } else {
                           cp.closeProgress();
                           kAlert(context, wrongLogin);
@@ -333,9 +434,9 @@ class _KgmsLoginState extends State<KgmsLogin> {
 }
 
 class KgmsMain extends StatelessWidget {
-  KgmsMain({Key key, @required this.userN}) : super(key: key);
+  const KgmsMain({Key key, @required this.userN}) : super(key: key);
 
-  final String _title = 'Kgms Admin';
+  //final String _title = 'Kgms Admin';
   final String userN;
 
   Widget _buildMainButtons(BuildContext context, String s, StatelessWidget slw,
@@ -402,8 +503,8 @@ class KgmsMain extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _title,
+        title: const Text(
+          'Kgms Admin',
           textDirection: TextDirection.ltr,
           style: TextStyle(
             color: Colors.black87,
@@ -420,7 +521,7 @@ class KgmsMain extends StatelessWidget {
               ),
               child: Text(
                 'Welcome ~ \n\n $userN',
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black87,
                   fontSize: 20,
                 ),
@@ -465,8 +566,9 @@ class KgmsMain extends StatelessWidget {
                     bool _isSignOut = await fServ.signOut();
                     if (_isSignOut) {
                       // print("Sign Out successful");
+                      //Navigator.pop(context);
                       Navigator.pop(context);
-                      Navigator.pop(context);
+                      Provider.of<LoginModel>(context, listen: false).logOut();
                     } else {
                       // print("Sign Out Not successful");
                       kAlert(context, wrongSignOut);
