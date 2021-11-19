@@ -7,6 +7,7 @@ import 'dart:io';
 import 'model/youtubeModel.dart';
 import 'localFileStorageService.dart';
 import 'dart:core';
+import 'package:async/async.dart' show AsyncCache;
 
 const _channelIdY = 'UCuS-pL1W9DnAgw0ju4rDOKA';
 const _playlistsYUrl = 'https://www.googleapis.com/youtube/v3/playlists';
@@ -27,6 +28,8 @@ const _userChannelUploadedVideoYurl =
 //'https://www.googleapis.com/auth/youtube.upload',
 //'https://www.googleapis.com/auth/youtubepartner'
 //]
+
+final _getYtPlaylistIdsCache = AsyncCache<String>(const Duration(minutes: 45));
 
 class YoutubeServ {
   OAuth2Helper _oauth2Helper;
@@ -64,7 +67,14 @@ class YoutubeServ {
 
   bool get isOauthValid => _oauth2Helper != null ? true : false;
 
-  Future<String> getYtPlaylist(String classId) async {
+  Future<String> get getYtPlaylistIdsCache =>
+      _getYtPlaylistIdsCache.fetch(() => _getYtPlaylistIds());
+
+  void resetYtPlaylistIdsCache() {
+    _getYtPlaylistIdsCache.invalidate();
+  }
+
+  Future<String> _getYtPlaylistIds() async {
     final _oHelper = await oauth2Helper;
     if (_oHelper != null) {
       final playlistsReqStr =
@@ -80,28 +90,13 @@ class YoutubeServ {
           print('jsonResp is not valid json');
         }
         if (jsonResp != null) {
-          //String _playlistsEtag = jsonResp['etag'] as String;
-          //print('playList etag ---> ${_playlistsEtag}');
           var jsonArr = jsonResp['items'] as List;
-          List<VideoListTag> _tags =
+          final List<VideoListTag> _tags =
               jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
-          //cacheServ.setEtag(_playlistsYUrl, _playlistsEtag);
-          //databaseServ.insertPlaylist(_tags);
-          String jsonArrStr = convert.jsonEncode(_tags);
-          var _playlistId = null;
-          for (final tag in _tags) {
-            if (tag.snippet.title == classId) {
-              _playlistId = tag.id;
-              //print(tag.toString());
-              break;
-            }
-          }
-          //print('getYtPlaylist json str ---> $jsonArrStr');
-          fileServ.writeKeyWithData('classesAndPlaylistId', jsonArrStr);
-          //.then(
-          //    (result) => print(
-          //        'writeKeyWithData = key classesAndPlaylistId --> $result'));
-          return _playlistId;
+
+          String _jsonArrStr = convert.jsonEncode(_tags);
+
+          return _jsonArrStr;
         }
       } else {
         print('resp status --> ${resp.statusCode}');
@@ -111,6 +106,54 @@ class YoutubeServ {
     }
     return null;
   }
+
+  //Future<String> getYtPlaylist(String classId) async {
+  //  final _oHelper = await oauth2Helper;
+  //  if (_oHelper != null) {
+  //    final playlistsReqStr =
+  //        _playlistsYUrl + '?part=snippet&channelId=$_channelIdY&maxResults=20';
+  //    var resp = await _oHelper.get(playlistsReqStr);
+  //    //print('resp completed -->');
+  //    if (resp.statusCode == 200) {
+  //      //print('resp status code 200');
+  //      var jsonResp = null;
+  //      try {
+  //        jsonResp = convert.jsonDecode(resp.body);
+  //      } on FormatException catch (e) {
+  //        print('jsonResp is not valid json');
+  //      }
+  //      if (jsonResp != null) {
+  //        //String _playlistsEtag = jsonResp['etag'] as String;
+  //        //print('playList etag ---> ${_playlistsEtag}');
+  //        var jsonArr = jsonResp['items'] as List;
+  //        List<VideoListTag> _tags =
+  //            jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
+  //        //cacheServ.setEtag(_playlistsYUrl, _playlistsEtag);
+  //        //databaseServ.insertPlaylist(_tags);
+  //        String jsonArrStr = convert.jsonEncode(_tags);
+  //        var _playlistId = null;
+  //        for (final tag in _tags) {
+  //          if (tag.snippet.title == classId) {
+  //            _playlistId = tag.id;
+  //            //print(tag.toString());
+  //            break;
+  //          }
+  //        }
+  //        //print('getYtPlaylist json str ---> $jsonArrStr');
+  //        fileServ.writeKeyWithData('classesAndPlaylistId', jsonArrStr);
+  //        //.then(
+  //        //    (result) => print(
+  //        //        'writeKeyWithData = key classesAndPlaylistId --> $result'));
+  //        return _playlistId;
+  //      }
+  //    } else {
+  //      print('resp status --> ${resp.statusCode}');
+  //      //print('resp headers --> ${resp.headers}');
+  //      //print('resp body --> ${resp.body}');
+  //    }
+  //  }
+  //  return null;
+  //}
 
   Future<String> getYtPlaylistItem(String playlistID, String pageToken) async {
     //String playlistID = await _getYtPlaylist(classId);
@@ -455,7 +498,7 @@ class YoutubeServ {
   }
 }
 
-YoutubeServ yServ = new YoutubeServ();
+final YoutubeServ yServ = YoutubeServ();
 
 //Map<String, Object> body = {
 //  "id": "$vid",

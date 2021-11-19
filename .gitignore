@@ -39,3 +39,4 @@ lib/generated_plugin_registrant.dart
 # imp flies
 android/key.properties
 android/app/google-service.json
+.env*

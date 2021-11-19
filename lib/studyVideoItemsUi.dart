@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'self.dart';
+import 'package:provider/provider.dart'
+    show
+        ReassembleHandler,
+        Provider,
+        ChangeNotifierProvider,
+        Consumer,
+        ChangeNotifierProvider,
+        WatchContext;
+//import 'self.dart';
+import 'src/kUtil.dart';
+import 'src/youtubeService.dart';
+import 'src/firestoreService.dart';
+import 'src/localFileStorageService.dart';
 import 'dart:convert' as convert;
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show MethodChannel, PlatformException;
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
@@ -76,7 +87,7 @@ class StudyVideoAppBar extends StatelessWidget implements PreferredSizeWidget {
                           Provider.of<VideoItemModel>(context, listen: false)
                               .getUserAgent();
                       //print('allowed');
-                      kDAlert(
+                      animatedCustomNonDismissibleAlert(
                           context,
                           VideoFilePickerForm(
                               className: className,
@@ -176,7 +187,7 @@ class StudyVideoAppBar extends StatelessWidget implements PreferredSizeWidget {
 class StudyVideo extends StatelessWidget {
   final String className;
   final String classId;
-  StudyVideo({Key key, @required this.className, @required this.classId})
+  const StudyVideo({Key key, @required this.className, @required this.classId})
       : super(key: key);
 
   @override
@@ -242,11 +253,20 @@ class VideoItemModel with ChangeNotifier {
 
   Future<void> _setYtPlaylistItem(String classId) async {
     if (_classPlayListID == null) {
-      var _playlistId = await _getPlalistIdTitle(classId);
+      //var _playlistId = await _getPlalistIdTitle(classId);
+      //if (_playlistId == null) {
+      //  _playlistId = await yServ.getYtPlaylist(classId);
+      //}
+      ////print('playlistId from ui --> $_playlistId');
+      //_classPlayListID = _playlistId;
+      var _playListsStr = await yServ.getYtPlaylistIdsCache;
+      String _playlistId = _getPlaylistIdFromJson(classId, _playListsStr);
       if (_playlistId == null) {
-        _playlistId = await yServ.getYtPlaylist(classId);
+        yServ.resetYtPlaylistIdsCache();
+        _playListsStr = await yServ.getYtPlaylistIdsCache;
+        _playlistId = _getPlaylistIdFromJson(classId, _playListsStr);
       }
-      //print('playlistId from ui --> $_playlistId');
+      //print('playlistId from ui --> $_playlistId for id --> $classId');
       _classPlayListID = _playlistId;
     }
     yServ.getYtPlaylistItem(_classPlayListID, null).then((jsonTags) async {
@@ -286,28 +306,44 @@ class VideoItemModel with ChangeNotifier {
     });
   }
 
-  Future<String> _getPlalistIdTitle(String classId) async {
-    String playlistId = null;
-    String data = await fileServ.readDataByKey('classesAndPlaylistId');
-    if (data != 'nil') {
-      var _jsonArr = null;
-      try {
-        _jsonArr = convert.jsonDecode(data) as List;
-      } on FormatException catch (e) {
-        print('_validatePlaylistUpdate data = $data and error = $e');
-      }
-      if (_jsonArr != null) {
-        for (final tag in _jsonArr) {
-          var clId = tag['title'] as String;
-          if (classId == clId) {
-            playlistId = tag['id'] as String;
-            break;
-          }
+  String _getPlaylistIdFromJson(String classId, dynamic json) {
+    String _plId = null;
+    try {
+      var _jsonArr = convert.jsonDecode(json) as List;
+      for (var tag in _jsonArr) {
+        if (classId == tag['title'] as String) {
+          _plId = tag['id'] as String;
+          break;
         }
       }
+    } on FormatException catch (e) {
+      print('ui _getPlaylistIdFromJson json error --> $json');
     }
-    return playlistId;
+    return _plId;
   }
+
+  //Future<String> _getPlalistIdTitle(String classId) async {
+  //  String playlistId = null;
+  //  String data = await fileServ.readDataByKey('classesAndPlaylistId');
+  //  if (data != 'nil') {
+  //    var _jsonArr = null;
+  //    try {
+  //      _jsonArr = convert.jsonDecode(data) as List;
+  //    } on FormatException catch (e) {
+  //      print('_validatePlaylistUpdate data = $data and error = $e');
+  //    }
+  //    if (_jsonArr != null) {
+  //      for (final tag in _jsonArr) {
+  //        var clId = tag['title'] as String;
+  //        if (classId == clId) {
+  //          playlistId = tag['id'] as String;
+  //          break;
+  //        }
+  //      }
+  //    }
+  //  }
+  //  return playlistId;
+  //}
 
   void removeAll() {
     _videoItems.clear();
@@ -405,7 +441,8 @@ class _VideoItem {
 class StudyVideoBody extends StatelessWidget {
   final String classId;
   final String className;
-  StudyVideoBody({Key key, @required this.classId, @required this.className})
+  const StudyVideoBody(
+      {Key key, @required this.classId, @required this.className})
       : super(key: key);
 
   static const _platform =
@@ -421,20 +458,28 @@ class StudyVideoBody extends StatelessWidget {
     }
   }
 
-  String _rPlaylistId = null;
+  //String _rPlaylistId = null;
 
   Future<List<dynamic>> getPlalistIdTitle() async {
-    String data = await fileServ.readDataByKey('classesAndPlaylistId');
-    if (data != 'nil') {
-      var _jsonArr = null;
-      try {
-        _jsonArr = convert.jsonDecode(data) as List;
-      } on FormatException catch (e) {
-        print('_validatePlaylistUpdate data = $data and error = $e');
-      }
-      return _jsonArr;
+    //String data = await fileServ.readDataByKey('classesAndPlaylistId');
+    //if (data != 'nil') {
+    //  var _jsonArr = null;
+    //  try {
+    //    _jsonArr = convert.jsonDecode(data) as List;
+    //  } on FormatException catch (e) {
+    //    print('_validatePlaylistUpdate data = $data and error = $e');
+    //  }
+    //  return _jsonArr;
+    //}
+    //return null;
+    var result = null;
+    var _playListsStr = await yServ.getYtPlaylistIdsCache;
+    try {
+      result = convert.jsonDecode(_playListsStr) as List;
+    } on FormatException catch (e) {
+      print('getPlalistIdTitle data = $_playListsStr and error = $e');
     }
-    return null;
+    return result;
   }
 
   AlertDialog _removeVideoAlertW(BuildContext context, _VideoItem item) =>
@@ -562,6 +607,7 @@ class StudyVideoBody extends StatelessWidget {
                     final KCircularProgress cp =
                         KCircularProgress(ctx: context);
                     cp.showCircularProgress();
+                    //var pList = await firestoreServ.getClassesAndIds();
                     var pList = await getPlalistIdTitle();
                     //pList.forEach((item) => print('${item['title'] as String} and ${item['id'] as String}'));
                     if (pList != null && pList.length > 0) {
@@ -573,7 +619,7 @@ class StudyVideoBody extends StatelessWidget {
                             Provider.of<VideoItemModel>(context, listen: false)
                                 .userAgent;
                         cp.closeProgress();
-                        kDAlert(
+                        animatedCustomNonDismissibleAlert(
                             context,
                             _MultiSelectClassForm(
                                 preClassId: pmv,
@@ -630,7 +676,7 @@ class StudyVideoBody extends StatelessWidget {
                           Provider.of<VideoItemModel>(context, listen: false)
                               .userAgent;
 
-                      kDAlert(
+                      animatedCustomNonDismissibleAlert(
                           context,
                           VideoTitleEditForm(
                               vItem: item,
@@ -656,9 +702,10 @@ class StudyVideoBody extends StatelessWidget {
                   Spacer(),
                   TextButton(
                     child: const Text('X Remove'),
-                    onPressed: () {
+                    onPressed: () async {
                       //print('Remove Video --> ${item.title} & ${item.videoId}');
-                      kDAlert(context, _removeVideoAlertW(context, item));
+                      animatedCustomNonDismissibleAlert(
+                          context, _removeVideoAlertW(context, item));
                       //String jsonData =
                       //    await cacheServ.getJsonData('classesAndIds');
                       //print('from remove --> $jsonData');
@@ -777,7 +824,7 @@ class VideoTitleEditForm extends StatefulWidget {
   final String className;
   final String userAgent;
   final Function(_VideoItem) onSuccessfulUpdate;
-  VideoTitleEditForm(
+  const VideoTitleEditForm(
       {Key key,
       @required this.vItem,
       @required this.className,
@@ -818,55 +865,59 @@ class _VideoTitleEditFormState extends State<VideoTitleEditForm> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(8)),
       ),
-      titleTextStyle: TextStyle(
+      titleTextStyle: const TextStyle(
         color: Colors.black,
         fontWeight: FontWeight.w500,
         fontSize: 18,
       ),
       elevation: 15,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Text(
-                'Title :  ',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16.5,
-                ),
-              ),
-              Expanded(
-                child: Theme(
-                  data: ThemeData(
-                    primaryColor: Colors.blueAccent,
+      content: Container(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              children: <Widget>[
+                const Text(
+                  'Title :  ',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16.5,
                   ),
-                  child: TextField(
-                    controller: _vTitleCtrl,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 5, horizontal: 10),
+                ),
+                Expanded(
+                  child: Theme(
+                    data: ThemeData(
+                      primaryColor: Colors.blueAccent,
                     ),
-                    maxLines: 4,
-                    minLines: 1,
-                    cursorColor: Colors.blue,
+                    child: TextField(
+                      controller: _vTitleCtrl,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 5, horizontal: 10),
+                      ),
+                      maxLines: 4,
+                      minLines: 1,
+                      cursorColor: Colors.blue,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Text(
-              '$_updateIssue',
-              style: TextStyle(
-                color: Colors.red,
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                '$_updateIssue',
+                style: TextStyle(
+                  color: Colors.red,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: <Widget>[
         ElevatedButton(
@@ -950,6 +1001,9 @@ class _VideoTitleEditFormState extends State<VideoTitleEditForm> {
         Divider(),
       ],
       //buttonPadding: const EdgeInsets.all(5),
+      clipBehavior: Clip.none,
+      insetPadding: const EdgeInsets.all(10),
+      backgroundColor: Colors.indigo.shade50,
     );
   }
 }
@@ -960,7 +1014,7 @@ class VideoFilePickerForm extends StatefulWidget {
   final String userAgent;
   final String playlistId;
   final Function(String) onSuccessfulUpload;
-  VideoFilePickerForm(
+  const VideoFilePickerForm(
       {Key key,
       @required this.className,
       @required this.classId,
@@ -977,14 +1031,21 @@ class _VideoFilePickerFormState extends State<VideoFilePickerForm> {
   String _fullFilePath;
   String _uploadIssue;
   String _filePathExt;
-  TextEditingController _fileNameCtrl;
+  final TextEditingController _fileNameCtrl = TextEditingController();
   @override
   void initState() {
     super.initState();
     _filePathExt = "";
-    _fileNameCtrl = TextEditingController(text: "None");
+    //_fileNameCtrl = TextEditingController(text: "None");
+    _fileNameCtrl.text = "None";
     _fullFilePath = null;
     _uploadIssue = "";
+  }
+
+  @override
+  void dispose() {
+    _fileNameCtrl.dispose();
+    super.dispose();
   }
 
   void setDialogMsg(String msg) => setState(() {
@@ -998,56 +1059,59 @@ class _VideoFilePickerFormState extends State<VideoFilePickerForm> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(8)),
       ),
-      titleTextStyle: TextStyle(
+      titleTextStyle: const TextStyle(
         color: Colors.black,
         fontWeight: FontWeight.w500,
         fontSize: 18,
       ),
       elevation: 15,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Text(
-                'File :  ',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16.5,
-                ),
-              ),
-              Expanded(
-                child: Theme(
-                  data: ThemeData(
-                    primaryColor: Colors.blueAccent,
+      content: Container(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Text(
+                  'File :  ',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16.5,
                   ),
-                  child: TextField(
-                    controller: _fileNameCtrl,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 5, horizontal: 10),
+                ),
+                Expanded(
+                  child: Theme(
+                    data: ThemeData(
+                      primaryColor: Colors.blueAccent,
                     ),
-                    maxLines: 4,
-                    minLines: 1,
-                    cursorColor: Colors.blue,
+                    child: TextField(
+                      controller: _fileNameCtrl,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 5, horizontal: 10),
+                      ),
+                      maxLines: 4,
+                      minLines: 1,
+                      cursorColor: Colors.blue,
+                    ),
                   ),
                 ),
-              ),
-              Text(' $_filePathExt'),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Text(
-              '$_uploadIssue',
-              style: TextStyle(
-                color: Colors.red,
+                Text(' $_filePathExt'),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                '$_uploadIssue',
+                style: const TextStyle(
+                  color: Colors.red,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: <Widget>[
         ElevatedButton(
@@ -1093,6 +1157,7 @@ class _VideoFilePickerFormState extends State<VideoFilePickerForm> {
             )),
           ),
         ),
+        Divider(),
         ElevatedButton(
           onPressed: () async {
             if (_fileNameCtrl.text.isEmpty ||
@@ -1168,6 +1233,7 @@ class _VideoFilePickerFormState extends State<VideoFilePickerForm> {
             )),
           ),
         ),
+        Divider(),
         ElevatedButton(
           onPressed: () {
             Navigator.of(context).pop();
@@ -1187,7 +1253,12 @@ class _VideoFilePickerFormState extends State<VideoFilePickerForm> {
         ),
       ],
       //actionsOverflowButtonSpacing: 2.0,
-      buttonPadding: const EdgeInsets.all(7),
+      //buttonPadding: const EdgeInsets.all(7),
+      //buttonPadding: const EdgeInsets.only(top: 7.0),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+      clipBehavior: Clip.none,
+      insetPadding: const EdgeInsets.all(10),
+      backgroundColor: Colors.indigo.shade50,
     );
   }
 }
@@ -1296,7 +1367,7 @@ class StudyRecycleVideo extends StatelessWidget {
   //final String playlistId;
   final String userAgent;
   final Function(String) onSuccessfulRecycle;
-  StudyRecycleVideo(
+  const StudyRecycleVideo(
       {Key key,
       @required this.className,
       //@required this.classId,
@@ -1435,7 +1506,7 @@ class StudyRecycleVideoBody extends StatelessWidget {
   final String userAgent;
   //final String classId;
   final Function(String) onSuccessfulRecycle;
-  StudyRecycleVideoBody(
+  const StudyRecycleVideoBody(
       {Key key,
       @required this.className,
       //@required this.playlistId,
@@ -1463,17 +1534,25 @@ class StudyRecycleVideoBody extends StatelessWidget {
   //}
 
   Future<List<dynamic>> getPlalistIdTitle() async {
-    String data = await fileServ.readDataByKey('classesAndPlaylistId');
-    if (data != 'nil') {
-      var _jsonArr = null;
-      try {
-        _jsonArr = convert.jsonDecode(data) as List;
-      } on FormatException catch (e) {
-        print('_validatePlaylistUpdate data = $data and error = $e');
-      }
-      return _jsonArr;
+    //String data = await fileServ.readDataByKey('classesAndPlaylistId');
+    //if (data != 'nil') {
+    //  var _jsonArr = null;
+    //  try {
+    //    _jsonArr = convert.jsonDecode(data) as List;
+    //  } on FormatException catch (e) {
+    //    print('_validatePlaylistUpdate data = $data and error = $e');
+    //  }
+    //  return _jsonArr;
+    //}
+    //return null;
+    var result = null;
+    var _playListsStr = await yServ.getYtPlaylistIdsCache;
+    try {
+      result = convert.jsonDecode(_playListsStr) as List;
+    } on FormatException catch (e) {
+      print('getPlalistIdTitle data = $_playListsStr and error = $e');
     }
-    return null;
+    return result;
   }
 
   //AlertDialog _recycleVideoAlertW(BuildContext context, _VideoItem item) =>
@@ -1590,19 +1669,13 @@ class StudyRecycleVideoBody extends StatelessWidget {
                 icon: const Icon(Icons.share_outlined, size: 27.5),
                 tooltip: 'share video to classes',
                 onPressed: () async {
-                  //String _rPlaylistId =
-                  //    Provider.of<VideoRecycleItemModel>(context, listen: false)
-                  //        .classRplayListID;
-                  //print('recycle video item --> ${item.videoId}, ${item.id}');
-                  //print('rPlaylistId --> $_rPlaylistId');
-                  //print('playlistId --> $_playlistId');
-
-                  //kDAlert(context, _recycleVideoAlertW(context, item));
                   bool _internet = await isInternetAvailable();
                   if (_internet) {
                     final KCircularProgress cp =
                         KCircularProgress(ctx: context);
                     cp.showCircularProgress();
+                    //var pList = await firestoreServ.getClassesAndIds();
+                    //_clIds.forEach((item) => print('${item['className']} and ${item['classId']}'));
                     var pList = await getPlalistIdTitle();
                     //pList.forEach((item) => print('${item['title'] as String} and ${item['id'] as String}'));
                     if (pList != null && pList.length > 0) {
@@ -1614,7 +1687,7 @@ class StudyRecycleVideoBody extends StatelessWidget {
                         //    Provider.of<VideoItemModel>(context, listen: false)
                         //        .userAgent;
                         cp.closeProgress();
-                        kDAlert(
+                        animatedCustomNonDismissibleAlert(
                             context,
                             _MultiSelectClassForm(
                                 preClassId: pmv,
@@ -1692,7 +1765,7 @@ class StudyRecycleVideoBody extends StatelessWidget {
                       //        .userAgent;
                       //print('userAgent --> $userAgent');
 
-                      kDAlert(
+                      animatedCustomNonDismissibleAlert(
                           context,
                           VideoTitleEditForm(
                               vItem: item,
@@ -1768,7 +1841,7 @@ class _MultiSelectClassForm extends StatefulWidget {
   final String videoId;
   final String userAgent;
   final String videoTitle;
-  _MultiSelectClassForm(
+  const _MultiSelectClassForm(
       {Key key,
       @required this.preClassId,
       @required this.onSuccessfulUpdate,
@@ -1794,32 +1867,50 @@ class _MultiSelectClassFormState extends State<_MultiSelectClassForm> {
   }
 
   Future<void> _init() async {
-    String data = await fileServ.readDataByKey('classesAndIds');
-    if (data != 'nil') {
-      var _jsonArr = null;
-      try {
-        _jsonArr = convert.jsonDecode(data) as List;
-        //List<_ClassListModel> _tags =
-        //    _jsonArr.map((tagJson) => _ClassListModel.fromJson(tagJson)).toList();
-      } on FormatException catch (e) {
-        print('data = $data and error = $e');
-        setState(() {
-          _currentState = 'empty';
-          _dialogMessage = 'Error !';
-          _showMessage = true;
-        });
-      }
-      if (_jsonArr != null && _jsonArr.length > 0) {
-        setState(() {
-          for (final tag in _jsonArr) {
-            var clId = tag['classId'] as String;
-            var isMatch = widget.preClassId.contains(clId);
-            var clm = _ClassListModel.fromJson(tag, isEditable: !isMatch);
-            _classList.add(clm);
-          }
-          _currentState = 'ok';
-        });
-      }
+    //String data = await fileServ.readDataByKey('classesAndIds');
+    //if (data != 'nil') {
+    //  var _jsonArr = null;
+    //  try {
+    //    _jsonArr = convert.jsonDecode(data) as List;
+    //    //List<_ClassListModel> _tags =
+    //    //    _jsonArr.map((tagJson) => _ClassListModel.fromJson(tagJson)).toList();
+    //  } on FormatException catch (e) {
+    //    print('data = $data and error = $e');
+    //    setState(() {
+    //      _currentState = 'empty';
+    //      _dialogMessage = 'Error !';
+    //      _showMessage = true;
+    //    });
+    //  }
+    //  if (_jsonArr != null && _jsonArr.length > 0) {
+    //    setState(() {
+    //      for (final tag in _jsonArr) {
+    //        var clId = tag['classId'] as String;
+    //        var isMatch = widget.preClassId.contains(clId);
+    //        var clm = _ClassListModel.fromJson(tag, isEditable: !isMatch);
+    //        _classList.add(clm);
+    //      }
+    //      _currentState = 'ok';
+    //    });
+    //  }
+    //} else {
+    //  setState(() {
+    //    _currentState = 'empty';
+    //    _dialogMessage = 'Error !';
+    //    _showMessage = true;
+    //  });
+    //}
+    var data = await firestoreServ.getClassesAndIds();
+    if (data.length > 0) {
+      setState(() {
+        for (final tag in data) {
+          var clId = tag['classId'];
+          var isMatch = widget.preClassId.contains(clId);
+          var clm = _ClassListModel.fromJson(tag, isEditable: !isMatch);
+          _classList.add(clm);
+        }
+        _currentState = 'ok';
+      });
     } else {
       setState(() {
         _currentState = 'empty';
@@ -2069,9 +2160,15 @@ class _ClassListModel {
 
   //String get className => _className;
 
-  factory _ClassListModel.fromJson(dynamic json, {isEditable: true}) {
-    return _ClassListModel(
-        json['className'] as String, json['classId'] as String, isEditable,
+  //factory _ClassListModel.fromJson(dynamic json, {isEditable: true}) {
+  //  return _ClassListModel(
+  //      json['className'] as String, json['classId'] as String, isEditable,
+  //      boolValue: !isEditable);
+  //}
+
+  factory _ClassListModel.fromJson(Map<String, String> mData,
+      {isEditable: true}) {
+    return _ClassListModel(mData['className'], mData['classId'], isEditable,
         boolValue: !isEditable);
   }
 

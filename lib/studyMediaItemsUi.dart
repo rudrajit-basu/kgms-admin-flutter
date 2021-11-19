@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart' show MethodChannel, PlatformException;
+import 'package:firebase_storage/firebase_storage.dart'
+    show Reference, FirebaseStorage, TaskState;
+import 'package:file_picker/file_picker.dart' show FilePicker, FileType;
 import 'package:path/path.dart';
-import 'self.dart';
+//import 'self.dart';
+import 'src/kUtil.dart';
+import 'src/localCacheService.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+//import 'package:flutter/gestures.dart';
 //import 'package:video_player/video_player.dart';
 //import 'package:chewie/chewie.dart';
 
@@ -41,7 +45,7 @@ class StudyMediaAppBar extends StatelessWidget implements PreferredSizeWidget {
               // print('add new media');
               bool _internet = await isInternetAvailable();
               if (_internet) {
-                kDAlert(
+                animatedCustomNonDismissibleAlert(
                     context,
                     MediaFilePickerForm(
                         classId: classId,
@@ -63,7 +67,7 @@ class StudyMediaAppBar extends StatelessWidget implements PreferredSizeWidget {
 class StudyMedia extends StatelessWidget {
   final String className;
   final String classId;
-  StudyMedia({Key key, @required this.className, @required this.classId})
+  const StudyMedia({Key key, @required this.className, @required this.classId})
       : super(key: key);
 
   @override
@@ -143,9 +147,23 @@ class MediaItemsModel with ChangeNotifier {
   }
 }
 
+const List<String> _imageExtList = [
+  '.jpg',
+  '.png',
+  '.jpeg',
+  '.gif',
+  '.svg',
+  '.jfif',
+  '.pjpeg',
+  '.pjp',
+  '.ico',
+  '.cur',
+  '.apng'
+];
+
 class StudyMediaBody extends StatelessWidget {
   final String classId;
-  StudyMediaBody({Key key, @required this.classId}) : super(key: key);
+  const StudyMediaBody({Key key, @required this.classId}) : super(key: key);
 
   Card _loadingTile(String msg) => Card(
         color: Colors.orange[300],
@@ -220,24 +238,10 @@ class StudyMediaBody extends StatelessWidget {
         ],
       );
 
-  T cast<T>(x) => x is T ? x : null;
-
-  final List<String> imageExtList = [
-    '.jpg',
-    '.png',
-    '.jpeg',
-    '.gif',
-    '.svg',
-    '.jfif',
-    '.pjpeg',
-    '.pjp',
-    '.ico',
-    '.cur',
-    '.apng'
-  ];
+  //T cast<T>(x) => x is T ? x : null;
 
   String getFileType(String ext) {
-    if (imageExtList.contains(ext.toLowerCase()))
+    if (_imageExtList.contains(ext.toLowerCase()))
       return "image";
     else
       return "unknown";
@@ -279,11 +283,12 @@ class StudyMediaBody extends StatelessWidget {
               ),
             ),
             trailing: IconButton(
-              icon: Icon(Icons.delete_forever),
+              icon: const Icon(Icons.delete_forever),
               tooltip: 'delete forever',
               onPressed: () async {
                 //print('delete item');
-                kDAlert(context, _deleteAlertW(context, classId, fileName));
+                animatedCustomNonDismissibleAlert(
+                    context, _deleteAlertW(context, classId, fileName));
               },
             ),
             onTap: () async {
@@ -291,12 +296,14 @@ class StudyMediaBody extends StatelessWidget {
               bool _internet = await isInternetAvailable();
               if (_internet) {
                 if (fileType == "image") {
-                  dynamic downloadUrl = await storageReference
-                      .child(classId)
-                      .child(fileName)
-                      .getDownloadURL();
-                  String sUrl = cast<String>(downloadUrl);
-                  kDDAlert(context, ImageDialog(imgUrl: sUrl));
+                  //dynamic downloadUrl = await storageReference
+                  //    .child(classId)
+                  //    .child(fileName)
+                  //    .getDownloadURL();
+                  //String sUrl = cast<String>(downloadUrl);
+                  //kDDAlert(context, ImageDialog(imgUrl: sUrl));
+                  kDDAlert(context,
+                      ImageDialog(classId: classId, fileName: fileName));
                 } else {
                   Scaffold.of(context)
                       .showSnackBar(kSnackbar('Media not listed..!!'));
@@ -348,7 +355,7 @@ class StudyMediaBody extends StatelessWidget {
 class MediaFilePickerForm extends StatefulWidget {
   final String classId;
   final Function(String) onSuccessfulUpload;
-  MediaFilePickerForm(
+  const MediaFilePickerForm(
       {Key key, @required this.classId, @required this.onSuccessfulUpload})
       : super(key: key);
 
@@ -360,16 +367,25 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
   String _fullFilePath;
   String _uploadIssue;
   String _filePathExt;
-  TextEditingController _fileNameCtrl;
+  final TextEditingController _fileNameCtrl = TextEditingController();
   @override
   void initState() {
     super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
     _filePathExt = "";
-    _fileNameCtrl = TextEditingController(text: "None");
+    _fileNameCtrl.text = "None";
     _fullFilePath = null;
     _uploadIssue = "";
   }
 
+  @override
+  void dispose() {
+    _fileNameCtrl.dispose();
+    super.dispose();
+  }
   //final List<String> alExt = [
   //  'jpg',
   //  'png',
@@ -387,60 +403,63 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Select Media File !'),
+      title: const Text('Select Media File !'),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(10)),
       ),
-      titleTextStyle: TextStyle(
+      titleTextStyle: const TextStyle(
         color: Colors.black,
         fontWeight: FontWeight.w500,
         fontSize: 18,
       ),
       elevation: 15,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Text(
-                'File :  ',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16.5,
-                ),
-              ),
-              Expanded(
-                child: Theme(
-                  data: ThemeData(
-                    primaryColor: Colors.blueAccent,
+      content: Container(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Text(
+                  'File :  ',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16.5,
                   ),
-                  child: TextField(
-                    controller: _fileNameCtrl,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 5, horizontal: 10),
+                ),
+                Expanded(
+                  child: Theme(
+                    data: ThemeData(
+                      primaryColor: Colors.blueAccent,
                     ),
-                    maxLines: 4,
-                    minLines: 1,
-                    cursorColor: Colors.blue,
+                    child: TextField(
+                      controller: _fileNameCtrl,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 5, horizontal: 10),
+                      ),
+                      maxLines: 4,
+                      minLines: 1,
+                      cursorColor: Colors.blue,
+                    ),
                   ),
                 ),
-              ),
-              Text(' $_filePathExt'),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Text(
-              '$_uploadIssue',
-              style: TextStyle(
-                color: Colors.red,
+                Text(' $_filePathExt'),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                '$_uploadIssue',
+                style: const TextStyle(
+                  color: Colors.red,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: <Widget>[
         ElevatedButton(
@@ -490,6 +509,7 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
             )),
           ),
         ),
+        Divider(),
         ElevatedButton(
           onPressed: () async {
             if (_fileNameCtrl.text.isEmpty ||
@@ -593,6 +613,7 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
             )),
           ),
         ),
+        Divider(),
         ElevatedButton(
           onPressed: () {
             Navigator.of(context).pop();
@@ -616,34 +637,208 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
           ),
         ),
       ],
-      buttonPadding: const EdgeInsets.all(7),
+      //buttonPadding: const EdgeInsets.all(7),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+      clipBehavior: Clip.none,
+      insetPadding: const EdgeInsets.all(10),
+      backgroundColor: Colors.indigo.shade50,
     );
   }
 }
 
 class ImageDialog extends StatelessWidget {
-  final String imgUrl;
-  ImageDialog({Key key, @required this.imgUrl}) : super(key: key);
+  final String classId;
+  final String fileName;
+  const ImageDialog({Key key, @required this.classId, @required this.fileName})
+      : super(key: key);
+
+  T cast<T>(x) => x is T ? x : null;
+
+  Future<String> _getImgUrl() async {
+    final dynamic downloadUrl =
+        await storageReference.child(classId).child(fileName).getDownloadURL();
+    final String sUrl = cast<String>(downloadUrl);
+    return sUrl;
+  }
+
+  Future<String> _getCacheImgUrl() async {
+    final mapData = await cacheServ.getClassImgUrlCache(classId);
+    if (mapData != null && mapData.containsKey(fileName)) {
+      return mapData[fileName];
+    } else {
+      final url = await _getImgUrl();
+      if (url != null) cacheServ.addClassImgUrlCache(classId, fileName, url);
+      return url;
+    }
+  }
+
+  Widget _imgWidget() => FutureBuilder(
+        future: _getCacheImgUrl(),
+        builder: (context, snapshot) {
+          if (snapshot == null) {
+            return const Text('No internet ..!');
+          } else {
+            if (snapshot.hasError)
+              return const Text('snapshot has error ..!');
+            else
+              switch (snapshot.connectionState) {
+                case ConnectionState.waiting:
+                  return const Text('Please wait loading ..!!');
+                default:
+                  return CachedNetworkImage(
+                    imageUrl: snapshot.data,
+                    //fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
+                    imageBuilder: (context, imageProvider) =>
+                        OrientationBuilder(builder: (context, orientation) {
+                      return InteractiveViewer(
+                        transformationController:
+                            TransformationController(Matrix4.identity()),
+                        minScale: 0.1,
+                        maxScale:
+                            orientation == Orientation.portrait ? 1.8 : 1.06,
+                        //constrained: orientation == Orientation.portrait ? true : false,
+                        //constrained: false,
+                        //alignPanAxis: true,
+                        panEnabled: true,
+                        scaleEnabled: true,
+                        child: orientation == Orientation.portrait
+                            ? Container(
+                                //height: double.infinity,
+                                transform: Matrix4.identity(),
+                                foregroundDecoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.fill,
+                                  ),
+                                  //borderRadius: BorderRadius.circular(8)
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                primary: true,
+                                child: Image(
+                                    image: imageProvider,
+                                    filterQuality: FilterQuality.high,
+                                    fit: BoxFit.fitWidth)),
+                      );
+                    }),
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) =>
+                        const Text('Image not found !'),
+                  );
+              }
+          }
+        },
+      );
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      child: Center(
-        child: InteractiveViewer(
-          minScale: 0.1,
-          maxScale: 2.0,
-          child: CachedNetworkImage(
-            imageUrl: imgUrl,
-            placeholder: (context, url) => CircularProgressIndicator(),
-            errorWidget: (context, url, error) => Icon(Icons.error),
+    return AlertDialog(
+      title: Container(
+        child: ListTile(
+          //title: const Text('Image',
+          //    style: const TextStyle(
+          //      fontWeight: FontWeight.w500,
+          //      color: Colors.black,
+          //      fontSize: 17,
+          //    )),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 0.0, vertical: 0.0),
+          title: Text('Image : $fileName',
+              style: const TextStyle(color: Colors.black, fontSize: 16)),
+          leading: IconButton(
+            icon: const Icon(
+              Icons.close,
+              size: 32.0,
+            ),
+            tooltip: 'close image dialog',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(width: 2.0, color: Colors.grey),
           ),
         ),
       ),
+      content: Container(
+        width: double.maxFinite,
+        height: double.maxFinite,
+        alignment: AlignmentDirectional.center,
+        transform: Matrix4.identity(),
+        child: Theme(
+          data: ThemeData(
+            primaryColor: Colors.blueAccent,
+          ),
+          child: Center(child: _imgWidget()),
+        ),
+      ),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 5.0, vertical: 5.0),
+      clipBehavior: Clip.none,
+      insetPadding: const EdgeInsets.all(5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      backgroundColor: Colors.indigo.shade50,
     );
   }
 }
+
+//class ImageDialog extends StatelessWidget {
+//  final String imgUrl;
+//  const ImageDialog({Key key, @required this.imgUrl}) : super(key: key);
+
+//  @override
+//  Widget build(BuildContext context) {
+//    return Dialog(
+//      clipBehavior: Clip.none,
+//      insetPadding: const EdgeInsets.all(4),
+//      elevation: 0,
+//      backgroundColor: Colors.transparent,
+//      child: Container(
+//        width: double.maxFinite,
+//        //height: double.maxFinite,
+//        child: SingleChildScrollView(
+//          child: Column(
+//            mainAxisSize: MainAxisSize.max,
+//            crossAxisAlignment: CrossAxisAlignment.center,
+//            mainAxisAlignment: MainAxisAlignment.start,
+//            children: <Widget> [
+//              Align(
+//                 alignment: Alignment.topLeft,
+//                 child: IconButton(
+//                  icon: const Icon(Icons.close),
+//                  iconSize: 30.0,
+//                  color: Colors.white,
+//                  onPressed: () {
+//                    print('close image dialog !');
+//                    Navigator.of(context).pop();
+//                  },
+//                ),
+//              ),
+//              const Divider(
+//                height: 20,
+//              ),
+//              Center(
+//                child: InteractiveViewer(
+//                  minScale: 0.1,
+//                  maxScale: 2.0,
+//                  child: CachedNetworkImage(
+//                    imageUrl: imgUrl,
+//                    placeholder: (context, url) => CircularProgressIndicator(),
+//                    errorWidget: (context, url, error) => Icon(Icons.error),
+//                  ),
+//                ),
+//              ),
+//            ],
+//          ),
+//        ),
+//      ),
+//    );
+//  }
+//}
 
 //class ImageDialog extends StatelessWidget {
 //  final String imgUrl;

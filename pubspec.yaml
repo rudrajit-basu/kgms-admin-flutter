@@ -34,6 +34,9 @@ dependencies:
   flutter_datetime_picker: ^1.5.0
   path_provider: ^1.6.28
   flutter_sound: ^0.1.20
+  flutter_dotenv: ^3.1.0
+  charts_flutter: ^0.10.0
+  # sqflite: ^1.1.6+5
   #file_picker: ^1.12.0
   #shared_preferences: ^0.5.12+4
   #http: 0.12.2
@@ -60,6 +63,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
+  async: ^2.5.0
 
 dev_dependencies:
   flutter_test:
@@ -83,6 +87,7 @@ flutter:
   #  - images/a_dot_ham.jpeg
   assets:
     - images/kgms_logo.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

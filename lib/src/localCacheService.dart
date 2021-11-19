@@ -1,6 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:convert' as convert;
+import 'package:async/async.dart' show AsyncCache;
+
+final _classImgUrlCache =
+    AsyncCache<Map<String, Map<String, String>>>(const Duration(hours: 1));
 
 class LocalCacheServ {
   SharedPreferences _preference;
@@ -54,6 +58,27 @@ class LocalCacheServ {
   //  final _pref = await preference;
   //  return _pref.getString(url) ?? '';
   //}
+
+  Future<Map<String, Map<String, String>>> get _allClassImgUrlCache =>
+      _classImgUrlCache.fetch(() async => Map<String, Map<String, String>>());
+
+  Future<void> addClassImgUrlCache(
+      String classId, String fileName, String url) async {
+    final dataMap = await _allClassImgUrlCache;
+    if (dataMap.containsKey(classId)) {
+      dataMap[classId].update(fileName, (v) => url, ifAbsent: () => url);
+    } else {
+      dataMap[classId] = {fileName: url};
+    }
+    _classImgUrlCache.invalidate();
+    _classImgUrlCache.fetch(() async => dataMap);
+  }
+
+  Future<Map<String, String>> getClassImgUrlCache(String classId) async {
+    final dataMap = await _allClassImgUrlCache;
+    print('dataMap --> $dataMap');
+    return dataMap.containsKey(classId) ? dataMap[classId] : null;
+  }
 }
 
-LocalCacheServ cacheServ = new LocalCacheServ();
+final LocalCacheServ cacheServ = LocalCacheServ();

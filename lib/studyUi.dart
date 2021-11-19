@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'self.dart';
-import 'studyMediaItemsUi.dart';
-import 'studyVideoItemsUi.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'
+    show CollectionReference, DocumentSnapshot, DocumentReference;
+//import 'self.dart';
+import 'src/kUtil.dart';
+import 'src/firestoreService.dart';
+import 'studyMediaItemsUi.dart' show StudyMedia;
+import 'studyVideoItemsUi.dart' show StudyVideo;
 import 'dart:async';
 import 'dart:convert' as convert;
-import 'studyVoiceItemsUi.dart';
+import 'studyVoiceItemsUi.dart' show StudyVoiceWrapper;
 
 //final kClassesCollectionRef = Firestore.instance.collection('kgms-classes');
-final kClassesCollectionRef =
-    FirebaseFirestore.instance.collection('kgms-classes');
+//final kClassesCollectionRef =
+//    FirebaseFirestore.instance.collection('kgms-classes');
 
 // class StudyClassesModel {
 //   final String tagNo;
@@ -33,46 +36,46 @@ class _TotalKlist {
     this._totalKList = tList;
   }
 
-  Future<void> setClassesAndIds(List<DocumentSnapshot> data) {
-    final List<_ClassesAndIds> _ciList = [];
-    data.forEach((document) {
-      _ciList.add(_ClassesAndIds(
-          document['classId'] as String, document['className'] as String));
-    });
-    String _classesAndIds = convert.jsonEncode(_ciList);
-    //print('_classesAndIds --> $_classesAndIds');
-    //cacheServ
-    //    .setJsonData('classesAndIds', _classesAndIds)
-    //    .then((result) => print('setJsonData from _TotalKlist --> $result'));
-    //print('data --> ${data[0]['className']}');
-    fileServ.writeKeyWithData('classesAndIds', _classesAndIds);
-    //.then(
-    //    (result) => print('writeKeyWithData = key classesAndIds --> $result'));
-  }
+  //Future<void> setClassesAndIds(List<DocumentSnapshot> data) {
+  //  final List<_ClassesAndIds> _ciList = [];
+  //  data.forEach((document) {
+  //    _ciList.add(_ClassesAndIds(
+  //        document['classId'] as String, document['className'] as String));
+  //  });
+  //  String _classesAndIds = convert.jsonEncode(_ciList);
+  //  //print('_classesAndIds --> $_classesAndIds');
+  //  //cacheServ
+  //  //    .setJsonData('classesAndIds', _classesAndIds)
+  //  //    .then((result) => print('setJsonData from _TotalKlist --> $result'));
+  //  //print('data --> ${data[0]['className']}');
+  //  fileServ.writeKeyWithData('classesAndIds', _classesAndIds);
+  //  //.then(
+  //  //    (result) => print('writeKeyWithData = key classesAndIds --> $result'));
+  //}
 
   //String get classesAndIdsJson => _classesAndIds;
 }
 
-class _ClassesAndIds {
-  final String _classId;
-  final String _className;
+//class _ClassesAndIds {
+//  final String _classId;
+//  final String _className;
 
-  _ClassesAndIds(this._classId, this._className);
+//  _ClassesAndIds(this._classId, this._className);
 
-  //Map<String, dynamic> toMap() {
-  //  return {'classId': _classId, 'className': _className};
-  //}
+//  //Map<String, dynamic> toMap() {
+//  //  return {'classId': _classId, 'className': _className};
+//  //}
 
-  Map toJson() => {
-        'classId': _classId,
-        'className': _className,
-      };
+//  Map toJson() => {
+//        'classId': _classId,
+//        'className': _className,
+//      };
 
-  @override
-  String toString() {
-    return '{${this._classId}, ${this._className}}';
-  }
-}
+//  @override
+//  String toString() {
+//    return '{${this._classId}, ${this._className}}';
+//  }
+//}
 
 class KgmsStudyClassAppBar extends StatelessWidget
     implements PreferredSizeWidget {
@@ -127,7 +130,8 @@ class KgmsStudyClassAppBar extends StatelessWidget
 class KgmsStudyClassBody extends StatelessWidget {
   final _TotalKlist totalClasses;
 
-  KgmsStudyClassBody({Key key, @required this.totalClasses}) : super(key: key);
+  const KgmsStudyClassBody({Key key, @required this.totalClasses})
+      : super(key: key);
 
   Card _loadingTile(String msg) => Card(
         color: Colors.orange[300],
@@ -155,8 +159,77 @@ class KgmsStudyClassBody extends StatelessWidget {
         ),
       );
 
-  Card _studyClassesTile(
-          BuildContext context, DocumentSnapshot document, int index) =>
+  //Card _studyClassesTile(
+  //        BuildContext context, DocumentSnapshot document, int index) =>
+  //    Card(
+  //      color: Colors.orange[300],
+  //      elevation: 10,
+  //      shape: RoundedRectangleBorder(
+  //        borderRadius: BorderRadius.all(Radius.circular(8)),
+  //      ),
+  //      child: ListTile(
+  //          title: Text(
+  //            document['className'],
+  //            style: TextStyle(
+  //              color: Colors.black87,
+  //              fontWeight: FontWeight.w500,
+  //            ),
+  //          ),
+  //          subtitle: Padding(
+  //            padding: const EdgeInsets.only(top: 6.0),
+  //            child: Text('class id: ${document['classId']}'),
+  //          ),
+  //          leading: CircleAvatar(
+  //            child: Text(
+  //              (index + 1).toString(),
+  //              style: TextStyle(
+  //                color: Colors.black87,
+  //                fontWeight: FontWeight.w600,
+  //              ),
+  //            ),
+  //          ),
+  //          trailing: IconButton(
+  //            //icon: Icon(Icons.lock_open),
+  //            icon: Icon(Icons.settings_sharp),
+  //            tooltip: 'change credentials',
+  //            onPressed: () {
+  //              // print('change credentials pressed !');
+  //              // Navigator.push(
+  //              //   context,
+  //              //   MaterialPageRoute(
+  //              //     builder: (context) => KgmsClassCredential(kClassDocument: document, isDelete: true),
+  //              //   ),
+  //              // );
+  //              _kClassNavigation(
+  //                  context,
+  //                  KgmsClassCredential(
+  //                      kClassDocument: document, isDelete: true));
+  //            },
+  //          ),
+  //          onTap: () {
+  //            // print('kgms class pressed !');
+  //            //_KgmsClassCurrentDoc.docId = document.documentID;
+  //            _KgmsClassCurrentDoc.docId = document.id;
+  //            _KgmsClassCurrentDoc.className = document['className'];
+  //            _KgmsClassCurrentDoc.classId = document['classId'];
+
+  //            //Navigator.push(
+  //            //  context,
+  //            //  MaterialPageRoute(
+  //            //    builder: (context) => KgmsStudy(),
+  //            //  ),
+  //            //);
+  //            Navigator.push(
+  //              context,
+  //              MaterialPageRoute(
+  //                builder: (context) => KgmsClassStudyMain(),
+  //              ),
+  //            );
+  //          }),
+  //    );
+
+  Card _studyClassesTile1(
+          BuildContext context, KgmsClassModel document, int index) =>
       Card(
         color: Colors.orange[300],
         elevation: 10,
@@ -165,7 +238,7 @@ class KgmsStudyClassBody extends StatelessWidget {
         ),
         child: ListTile(
             title: Text(
-              document['className'],
+              document.className,
               style: TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.w500,
@@ -173,7 +246,7 @@ class KgmsStudyClassBody extends StatelessWidget {
             ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 6.0),
-              child: Text('class id: ${document['classId']}'),
+              child: Text('class id: ${document.classId}'),
             ),
             leading: CircleAvatar(
               child: Text(
@@ -189,13 +262,7 @@ class KgmsStudyClassBody extends StatelessWidget {
               icon: Icon(Icons.settings_sharp),
               tooltip: 'change credentials',
               onPressed: () {
-                // print('change credentials pressed !');
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => KgmsClassCredential(kClassDocument: document, isDelete: true),
-                //   ),
-                // );
+                //print('change credentials pressed !');
                 _kClassNavigation(
                     context,
                     KgmsClassCredential(
@@ -203,18 +270,12 @@ class KgmsStudyClassBody extends StatelessWidget {
               },
             ),
             onTap: () {
-              // print('kgms class pressed !');
-              //_KgmsClassCurrentDoc.docId = document.documentID;
-              _KgmsClassCurrentDoc.docId = document.id;
-              _KgmsClassCurrentDoc.className = document['className'];
-              _KgmsClassCurrentDoc.classId = document['classId'];
+              //print('kgms class pressed !');
 
-              //Navigator.push(
-              //  context,
-              //  MaterialPageRoute(
-              //    builder: (context) => KgmsStudy(),
-              //  ),
-              //);
+              _KgmsClassCurrentDoc.docId = document.docId;
+              _KgmsClassCurrentDoc.className = document.className;
+              _KgmsClassCurrentDoc.classId = document.classId;
+
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -236,42 +297,65 @@ class KgmsStudyClassBody extends StatelessWidget {
     }
   }
 
-  // List<Card> listStudyClasses(BuildContext ctx, int count) => List.generate(
-  //     count,
-  //     (i) => _studyClassesTile(
-  //         ctx,
-  //         StudyClassesModel(
-  //             (i + 1).toString(), 'ogroup', 'O Group', 'cat123')));
+  //final StreamBuilder _kClassListWidget() => StreamBuilder(
+  //    stream: kClassesCollectionRef.orderBy('classId').snapshots(),
+  //    builder: (context, snapshot) {
+  //      if (snapshot == null) {
+  //        return _loadingTile('Please check the internet connection !');
+  //      } else {
+  //        if (snapshot.hasError)
+  //          return _loadingTile('Something went wrong. Try later..!!');
+  //        else
+  //          switch (snapshot.connectionState) {
+  //            case ConnectionState.waiting:
+  //              return _loadingTile('Loading....');
+  //            default:
+  //              {
+  //                //totalClasses.setTotalKList(snapshot.data.documents.length);
+  //                totalClasses.setTotalKList(snapshot.data.size);
+  //                totalClasses.setClassesAndIds(snapshot.data.docs);
+  //                return ListView.builder(
+  //                  itemCount: snapshot.data.size,
+  //                  itemBuilder: (context, index) => _studyClassesTile(
+  //                      context, snapshot.data.docs[index], index),
+  //                );
+  //              }
+  //          }
+  //      }
+  //    },
+  //  );
+
+  StreamBuilder _kClassListWidget1(BuildContext context) => StreamBuilder(
+        stream: firestoreServ.getKgmsClasses(),
+        builder: (context, snapshot) {
+          if (snapshot == null) {
+            return _loadingTile('Please check the internet connection !');
+          } else {
+            if (snapshot.hasError)
+              return _loadingTile('snapshot has error');
+            else
+              switch (snapshot.connectionState) {
+                case ConnectionState.waiting:
+                  return _loadingTile('Loading....');
+                default:
+                  {
+                    //totalClasses.setTotalKList(snapshot.data.documents.length);
+                    totalClasses.setTotalKList(snapshot.data.length);
+                    //totalClasses.setClassesAndIds(snapshot.data.docs);
+                    return ListView.builder(
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, index) => _studyClassesTile1(
+                          context, snapshot.data[index], index),
+                    );
+                  }
+              }
+          }
+        },
+      );
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: kClassesCollectionRef.orderBy('classId').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot == null) {
-          return _loadingTile('Please check the internet connection !');
-        } else {
-          if (snapshot.hasError)
-            return _loadingTile('Something went wrong. Try later..!!');
-          else
-            switch (snapshot.connectionState) {
-              case ConnectionState.waiting:
-                return _loadingTile('Loading....');
-              default:
-                {
-                  //totalClasses.setTotalKList(snapshot.data.documents.length);
-                  totalClasses.setTotalKList(snapshot.data.size);
-                  totalClasses.setClassesAndIds(snapshot.data.docs);
-                  return ListView.builder(
-                    itemCount: snapshot.data.size,
-                    itemBuilder: (context, index) => _studyClassesTile(
-                        context, snapshot.data.docs[index], index),
-                  );
-                }
-            }
-        }
-      },
-    );
+    return _kClassListWidget1(context);
   }
 }
 
@@ -411,7 +495,7 @@ class KgmsClassStudyMain extends StatelessWidget {
 
 class KgmsClassCredentialAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  final DocumentSnapshot kClassDocument;
+  final KgmsClassModel kClassDocument;
   final bool isDelete;
 
   KgmsClassCredentialAppBar(
@@ -441,44 +525,37 @@ class KgmsClassCredentialAppBar extends StatelessWidget
               // print('Delete doc: $docID');
               final KCircularProgress cp = KCircularProgress(ctx: context);
               cp.showCircularProgress();
-              try {
-                //QuerySnapshot snapshot = await kClassesCollectionRef
-                //    .document(docID)
-                //    .collection('kgms-study')
-                //    .getDocuments();
-                QuerySnapshot snapshot = await kClassesCollectionRef
-                    .doc(docID)
-                    .collection('kgms-study')
-                    .get();
-                //.getDocuments();
+              //try {
+              //  QuerySnapshot snapshot = await kClassesCollectionRef
+              //      .doc(docID)
+              //      .collection('kgms-study')
+              //      .get();
 
-                for (QueryDocumentSnapshot ds in snapshot.docs) {
-                  // print('DocID => ${ds.documentID}');
-                  //await kClassesCollectionRef
-                  //    .document(docID)
-                  //    .collection('kgms-study')
-                  //    .document(ds.documentID)
-                  //    .delete();
-                  //await kClassesCollectionRef
-                  //    .document(docID)
-                  //    .collection('kgms-study')
-                  //    .document(ds.id)
-                  //    .delete();
-                  await kClassesCollectionRef
-                      .doc(docID)
-                      .collection('kgms-study')
-                      .doc(ds.id)
-                      .delete();
-                }
+              //  for (QueryDocumentSnapshot ds in snapshot.docs) {
+              //    await kClassesCollectionRef
+              //        .doc(docID)
+              //        .collection('kgms-study')
+              //        .doc(ds.id)
+              //        .delete();
+              //  }
 
-                //await kClassesCollectionRef.document(docID).delete();
-                await kClassesCollectionRef.doc(docID).delete();
+              //  await kClassesCollectionRef.doc(docID).delete();
+              //  cp.closeProgress();
+              //  Navigator.pop(context);
+              //  Navigator.pop(context, 'Class deleted successfully..!!');
+              //} catch (e) {
+              //  // _scaffoldKey2.currentState.showSnackBar(
+              //  //     kSnackbar('Delete unsuccessful. Please check.'));
+              //  cp.closeProgress();
+              //  Scaffold.of(context).showSnackBar(
+              //      kSnackbar('Delete unsuccessful. Please check.'));
+              //}
+              bool result = await firestoreServ.deleteKgmsClass(docID);
+              if (result) {
                 cp.closeProgress();
                 Navigator.pop(context);
                 Navigator.pop(context, 'Class deleted successfully..!!');
-              } catch (e) {
-                // _scaffoldKey2.currentState.showSnackBar(
-                //     kSnackbar('Delete unsuccessful. Please check.'));
+              } else {
                 cp.closeProgress();
                 Scaffold.of(context).showSnackBar(
                     kSnackbar('Delete unsuccessful. Please check.'));
@@ -522,7 +599,8 @@ class KgmsClassCredentialAppBar extends StatelessWidget
                 //print('Delete Class Doc id: ${kClassDocument.documentID}');
                 //kDAlert(
                 //    context, _deleteAlertW(context, kClassDocument.documentID));
-                kDAlert(context, _deleteAlertW(context, kClassDocument.id));
+                animatedCustomNonDismissibleAlert(
+                    context, _deleteAlertW(context, kClassDocument.docId));
               }
             },
           ),
@@ -533,10 +611,11 @@ class KgmsClassCredentialAppBar extends StatelessWidget
 }
 
 class KgmsClassCredentialForm extends StatefulWidget {
-  final DocumentSnapshot kClassDocument;
+  final KgmsClassModel kClassDocument;
+  //final DocumentSnapshot kClassDocument;
   final bool isDelete;
 
-  KgmsClassCredentialForm(
+  const KgmsClassCredentialForm(
       {Key key, this.kClassDocument, @required this.isDelete})
       : super(key: key);
 
@@ -546,10 +625,10 @@ class KgmsClassCredentialForm extends StatefulWidget {
 }
 
 class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
-  GlobalKey<FormState> _formKey;
-  TextEditingController _classNameCtrl;
-  TextEditingController _classIDCtrl;
-  TextEditingController _classPasswordCtrl;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _classNameCtrl = TextEditingController();
+  final TextEditingController _classIDCtrl = TextEditingController();
+  final TextEditingController _classPasswordCtrl = TextEditingController();
 
   final _classIDFocus = FocusNode();
   final _classPasswordFocus = FocusNode();
@@ -557,19 +636,26 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
   @override
   void initState() {
     super.initState();
-    _formKey = GlobalKey<FormState>();
-    _classNameCtrl = TextEditingController(
-        text: widget.kClassDocument != null
-            ? widget.kClassDocument['className']
-            : '');
-    _classIDCtrl = TextEditingController(
-        text: widget.kClassDocument != null
-            ? widget.kClassDocument['classId']
-            : '');
-    _classPasswordCtrl = TextEditingController(
-        text: widget.kClassDocument != null
-            ? widget.kClassDocument['classPassword']
-            : '');
+    //_formKey = GlobalKey<FormState>();
+    //_classNameCtrl = TextEditingController(
+    //    text: widget.kClassDocument != null
+    //        ? widget.kClassDocument['className']
+    //        : '');
+    //_classIDCtrl = TextEditingController(
+    //    text: widget.kClassDocument != null
+    //        ? widget.kClassDocument['classId']
+    //        : '');
+    //_classPasswordCtrl = TextEditingController(
+    //    text: widget.kClassDocument != null
+    //        ? widget.kClassDocument['classPassword']
+    //        : '');
+    _classNameCtrl.text =
+        widget.kClassDocument != null ? widget.kClassDocument.className : '';
+    _classIDCtrl.text =
+        widget.kClassDocument != null ? widget.kClassDocument.classId : '';
+    _classPasswordCtrl.text = widget.kClassDocument != null
+        ? widget.kClassDocument.classPassword
+        : '';
   }
 
   @override
@@ -577,7 +663,7 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
     _classNameCtrl.dispose();
     _classIDCtrl.dispose();
     _classPasswordCtrl.dispose();
-    _formKey = null;
+    //_formKey = null;
     super.dispose();
   }
 
@@ -587,212 +673,233 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
       key: _formKey,
       child: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 15),
-              child: TextFormField(
-                controller: _classNameCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Class Name cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Class Name*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
+        child: Theme(
+          data: ThemeData(
+            primaryColor: Colors.blueAccent,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: TextFormField(
+                  controller: _classNameCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Class Name cannot be empty !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Class Name*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 25, horizontal: 10),
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
-                ),
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_classIDFocus);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: TextFormField(
-                controller: _classIDCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Class ID cannot be empty !';
-                  } else if (value.split(' ').length > 1) {
-                    return 'Class ID cannot have spaces !';
-                  } else if (value != value.trim()) {
-                    return 'Class ID cannot have spaces !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Class ID*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (value) {
+                    FocusScope.of(context).requestFocus(_classIDFocus);
+                  },
                 ),
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                focusNode: _classIDFocus,
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_classPasswordFocus);
-                },
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: TextFormField(
-                controller: _classPasswordCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Class Password cannot be empty !';
-                  } else if (value.split(' ').length > 1) {
-                    return 'Class Password cannot have spaces !';
-                  } else if (value != value.trim()) {
-                    return 'Class Password cannot have spaces !';
-                  } else if (value != value.toLowerCase()) {
-                    return 'Class Password have to be lower case !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Class Password*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: TextFormField(
+                  controller: _classIDCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Class ID cannot be empty !';
+                    } else if (value.split(' ').length > 1) {
+                      return 'Class ID cannot have spaces !';
+                    } else if (value != value.trim()) {
+                      return 'Class ID cannot have spaces !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Class ID*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 25, horizontal: 10),
+                  ),
+                  style: const TextStyle(
                     fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                  focusNode: _classIDFocus,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (value) {
+                    FocusScope.of(context).requestFocus(_classPasswordFocus);
+                  },
                 ),
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                focusNode: _classPasswordFocus,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 17.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: RaisedButton.icon(
-                  onPressed: () async {
-                    if (_formKey.currentState.validate()) {
-                      // print('Save Class Credentials');
-                      bool _internet = await isInternetAvailable();
-                      if (_internet) {
-                        final KCircularProgress cp =
-                            KCircularProgress(ctx: context);
-                        cp.showCircularProgress();
-                        if (widget.isDelete) {
-                          // print('Update Class');
-                          bool _isUpdate = false;
-                          var kDataMap = Map<String, dynamic>();
-                          if (_classNameCtrl.text !=
-                              widget.kClassDocument['className']) {
-                            _isUpdate = true;
-                            kDataMap['className'] = _classNameCtrl.text;
-                          }
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: TextFormField(
+                  controller: _classPasswordCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Class Password cannot be empty !';
+                    } else if (value.split(' ').length > 1) {
+                      return 'Class Password cannot have spaces !';
+                    } else if (value != value.trim()) {
+                      return 'Class Password cannot have spaces !';
+                    } else if (value != value.toLowerCase()) {
+                      return 'Class Password have to be lower case !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Class Password*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 25, horizontal: 10),
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
+                  ),
+                  focusNode: _classPasswordFocus,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 17.0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: RaisedButton.icon(
+                    onPressed: () async {
+                      if (_formKey.currentState.validate()) {
+                        // print('Save Class Credentials');
+                        bool _internet = await isInternetAvailable();
+                        if (_internet) {
+                          final KCircularProgress cp =
+                              KCircularProgress(ctx: context);
+                          cp.showCircularProgress();
+                          if (widget.isDelete) {
+                            // print('Update Class');
+                            bool _isUpdate = false;
+                            var kDataMap = Map<String, dynamic>();
+                            if (_classNameCtrl.text !=
+                                widget.kClassDocument.className) {
+                              _isUpdate = true;
+                              kDataMap['className'] = _classNameCtrl.text;
+                            }
 
-                          if (_classIDCtrl.text !=
-                              widget.kClassDocument['classId']) {
-                            _isUpdate = true;
-                            kDataMap['classId'] = _classIDCtrl.text;
-                          }
+                            if (_classIDCtrl.text !=
+                                widget.kClassDocument.classId) {
+                              _isUpdate = true;
+                              kDataMap['classId'] = _classIDCtrl.text;
+                            }
 
-                          if (_classPasswordCtrl.text !=
-                              widget.kClassDocument['classPassword']) {
-                            _isUpdate = true;
-                            kDataMap['classPassword'] = _classPasswordCtrl.text;
-                          }
+                            if (_classPasswordCtrl.text !=
+                                widget.kClassDocument.classPassword) {
+                              _isUpdate = true;
+                              kDataMap['classPassword'] =
+                                  _classPasswordCtrl.text;
+                            }
 
-                          if (_isUpdate) {
-                            try {
-                              //await kClassesCollectionRef
-                              //    .document(widget.kClassDocument.documentID)
-                              //    .updateData(kDataMap);
-                              await kClassesCollectionRef
-                                  .doc(widget.kClassDocument.id)
-                                  .update(kDataMap);
+                            if (_isUpdate) {
+                              //try {
+                              //  await kClassesCollectionRef
+                              //      .doc(widget.kClassDocument.docId)
+                              //      .update(kDataMap);
+                              //  cp.closeProgress();
+                              //  Navigator.pop(context, 'Update success..!!');
+                              //} catch (e) {
+                              //  cp.closeProgress();
+                              //  Scaffold.of(context).showSnackBar(kSnackbar(
+                              //      'Update unsuccessful. Please check !'));
+                              //}
+                              var result = await firestoreServ.updateKgmsClass(
+                                  widget.kClassDocument.docId, kDataMap);
                               cp.closeProgress();
-                              Navigator.pop(context, 'Update success..!!');
-                            } catch (e) {
+                              if (result) {
+                                Navigator.pop(context, 'Update success..!!');
+                              } else {
+                                Scaffold.of(context).showSnackBar(kSnackbar(
+                                    'Update unsuccessful. Please check !'));
+                              }
+                            } else {
                               cp.closeProgress();
-                              Scaffold.of(context).showSnackBar(kSnackbar(
-                                  'Update unsuccessful. Please check !'));
+                              Scaffold.of(context).showSnackBar(
+                                  kSnackbar('Nothing to update..!!'));
                             }
                           } else {
-                            cp.closeProgress();
-                            Scaffold.of(context).showSnackBar(
-                                kSnackbar('Nothing to update..!!'));
-                          }
-                        } else {
-                          // print('New Class');
-                          var kDataMap = Map<String, dynamic>();
-                          kDataMap['className'] = _classNameCtrl.text;
-                          kDataMap['classId'] = _classIDCtrl.text;
-                          kDataMap['classPassword'] = _classPasswordCtrl.text;
+                            //print('New Class');
+                            var kDataMap = Map<String, dynamic>();
+                            kDataMap['className'] = _classNameCtrl.text;
+                            kDataMap['classId'] = _classIDCtrl.text;
+                            kDataMap['classPassword'] = _classPasswordCtrl.text;
 
-                          try {
-                            final DocumentReference _dR =
-                                await kClassesCollectionRef.add(kDataMap);
+                            //try {
+                            //  final DocumentReference _dR =
+                            //      await kClassesCollectionRef.add(kDataMap);
+                            //  cp.closeProgress();
+                            //  if (_dR != null)
+                            //    Navigator.pop(context, 'New class added...!!');
+                            //  else
+                            //    Scaffold.of(context).showSnackBar(kSnackbar(
+                            //        'New class unsuccessful. Please check !'));
+                            //} catch (e) {
+                            //  cp.closeProgress();
+                            //  Scaffold.of(context).showSnackBar(kSnackbar(
+                            //      'New class unsuccessful. Please check !'));
+                            //}
+                            var result =
+                                await firestoreServ.addKgmsClass(kDataMap);
                             cp.closeProgress();
-                            if (_dR != null)
+                            if (result) {
                               Navigator.pop(context, 'New class added...!!');
-                            else
+                            } else {
                               Scaffold.of(context).showSnackBar(kSnackbar(
                                   'New class unsuccessful. Please check !'));
-                          } catch (e) {
-                            cp.closeProgress();
-                            Scaffold.of(context).showSnackBar(kSnackbar(
-                                'New class unsuccessful. Please check !'));
+                            }
                           }
+                        } else {
+                          kAlert(context, noInternetWidget);
                         }
-                      } else {
-                        kAlert(context, noInternetWidget);
                       }
-                    }
-                  },
-                  label: Text(
-                    'Submit',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 18,
+                    },
+                    label: const Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                      ),
                     ),
+                    icon: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: const Icon(Icons.save, size: 28),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    splashColor: Colors.yellow,
+                    color: Colors.green,
                   ),
-                  icon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: const Icon(Icons.save, size: 28),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                  ),
-                  splashColor: Colors.yellow,
-                  color: Colors.green,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -800,7 +907,7 @@ class _KgmsClassCredentialFormState extends State<KgmsClassCredentialForm> {
 }
 
 class KgmsClassCredential extends StatelessWidget {
-  final DocumentSnapshot kClassDocument;
+  final KgmsClassModel kClassDocument;
   final bool isDelete;
 
   KgmsClassCredential({Key key, this.kClassDocument, @required this.isDelete})
@@ -878,14 +985,15 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            Text('Study :'),
-            Text('${_KgmsClassCurrentDoc.className}',
-                style: TextStyle(fontSize: 17.5))
-          ]),
+      title: Text('Study : ${_KgmsClassCurrentDoc.className}'),
+      //Column(
+      //    crossAxisAlignment: CrossAxisAlignment.start,
+      //    mainAxisSize: MainAxisSize.max,
+      //    children: <Widget>[
+      //      Text('Study :'),
+      //      Text('${_KgmsClassCurrentDoc.className}',
+      //          style: TextStyle(fontSize: 17.5))
+      //    ]),
       actions: <Widget>[
         Padding(
           padding: const EdgeInsets.only(right: 7),
@@ -908,46 +1016,46 @@ class KgmsStudyAppBar extends StatelessWidget implements PreferredSizeWidget {
             },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 7),
-          child: IconButton(
-            icon: const Icon(Icons.add_photo_alternate, size: 30),
-            tooltip: 'add new media',
-            onPressed: () async {
-              // print('add new media');
-              bool _internet = await isInternetAvailable();
-              if (_internet) {
-                _kStudyNavigation(
-                    context,
-                    StudyMedia(
-                        className: _KgmsClassCurrentDoc.className,
-                        classId: _KgmsClassCurrentDoc.classId));
-              } else {
-                kAlert(context, noInternetWidget);
-              }
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: IconButton(
-            icon: const Icon(Icons.ondemand_video_rounded, size: 28),
-            tooltip: 'add new video',
-            onPressed: () async {
-              //print('add new video');
-              bool _internet = await isInternetAvailable();
-              if (_internet) {
-                _kStudyNavigation(
-                    context,
-                    StudyVideo(
-                        className: _KgmsClassCurrentDoc.className,
-                        classId: _KgmsClassCurrentDoc.classId));
-              } else {
-                kAlert(context, noInternetWidget);
-              }
-            },
-          ),
-        ),
+        //Padding(
+        //  padding: const EdgeInsets.only(right: 7),
+        //  child: IconButton(
+        //    icon: const Icon(Icons.add_photo_alternate, size: 30),
+        //    tooltip: 'add new media',
+        //    onPressed: () async {
+        //      // print('add new media');
+        //      bool _internet = await isInternetAvailable();
+        //      if (_internet) {
+        //        _kStudyNavigation(
+        //            context,
+        //            StudyMedia(
+        //                className: _KgmsClassCurrentDoc.className,
+        //                classId: _KgmsClassCurrentDoc.classId));
+        //      } else {
+        //        kAlert(context, noInternetWidget);
+        //      }
+        //    },
+        //  ),
+        //),
+        //Padding(
+        //  padding: const EdgeInsets.only(right: 8),
+        //  child: IconButton(
+        //    icon: const Icon(Icons.ondemand_video_rounded, size: 28),
+        //    tooltip: 'add new video',
+        //    onPressed: () async {
+        //      //print('add new video');
+        //      bool _internet = await isInternetAvailable();
+        //      if (_internet) {
+        //        _kStudyNavigation(
+        //            context,
+        //            StudyVideo(
+        //                className: _KgmsClassCurrentDoc.className,
+        //                classId: _KgmsClassCurrentDoc.classId));
+        //      } else {
+        //        kAlert(context, noInternetWidget);
+        //      }
+        //    },
+        //  ),
+        //),
       ],
     );
   }
@@ -957,7 +1065,7 @@ class KgmsStudyBody extends StatelessWidget {
   final CollectionReference kStudyCollectionRef;
   final _TotalKlist totalStudies;
 
-  KgmsStudyBody(
+  const KgmsStudyBody(
       {Key key,
       @required this.kStudyCollectionRef,
       @required this.totalStudies})
@@ -1090,9 +1198,9 @@ class KgmsStudy extends StatelessWidget {
   KgmsStudy({Key key}) : super(key: key);
 
   //final kStudyCollectionRef = kClassesCollectionRef
-  //    .document(_KgmsClassCurrentDoc.docId)
+  //    .doc(_KgmsClassCurrentDoc.docId)
   //    .collection('kgms-study');
-  final kStudyCollectionRef = kClassesCollectionRef
+  final kStudyCollectionRef = firestoreServ.kClassesCollectionRef
       .doc(_KgmsClassCurrentDoc.docId)
       .collection('kgms-study');
 
@@ -1107,6 +1215,99 @@ class KgmsStudy extends StatelessWidget {
       body: KgmsStudyBody(
           kStudyCollectionRef: kStudyCollectionRef,
           totalStudies: _totalStudies),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        child: Container(
+          height: 57.0,
+          color: Colors.yellow,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  child: IconButton(
+                    icon: const Icon(Icons.add_photo_alternate, size: 32.5),
+                    tooltip: 'add new media',
+                    onPressed: () async {
+                      //print('add new media');
+                      bool _internet = await isInternetAvailable();
+                      if (_internet) {
+                        //_kStudyNavigation(
+                        //    context,
+                        //    StudyMedia(
+                        //        className: _KgmsClassCurrentDoc.className,
+                        //        classId: _KgmsClassCurrentDoc.classId));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StudyMedia(
+                                className: _KgmsClassCurrentDoc.className,
+                                classId: _KgmsClassCurrentDoc.classId),
+                          ),
+                        );
+                      } else {
+                        kAlert(context, noInternetWidget);
+                      }
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: IconButton(
+                    icon: const Icon(Icons.ondemand_video_rounded, size: 30.5),
+                    tooltip: 'add new video',
+                    onPressed: () async {
+                      //print('add new video');
+                      bool _internet = await isInternetAvailable();
+                      if (_internet) {
+                        //_kStudyNavigation(
+                        //    context,
+                        //    StudyVideo(
+                        //        className: _KgmsClassCurrentDoc.className,
+                        //        classId: _KgmsClassCurrentDoc.classId));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StudyVideo(
+                                className: _KgmsClassCurrentDoc.className,
+                                classId: _KgmsClassCurrentDoc.classId),
+                          ),
+                        );
+                      } else {
+                        kAlert(context, noInternetWidget);
+                      }
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: IconButton(
+                    icon: const Icon(Icons.keyboard_voice, size: 30.5),
+                    //tooltip: 'add new voice',
+                    onPressed: () async {
+                      print('add new voice');
+                      bool _internet = await isInternetAvailable();
+                      if (_internet) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StudyVoiceWrapper(
+                                className: _KgmsClassCurrentDoc.className,
+                                classId: _KgmsClassCurrentDoc.classId),
+                          ),
+                        );
+                      } else {
+                        kAlert(context, noInternetWidget);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1241,10 +1442,9 @@ class KgmsStudyContentAppBar extends StatelessWidget
                 Scaffold.of(context)
                     .showSnackBar(kSnackbar('Cannot delete new study.'));
               } else {
-                //print('Delete Class Doc id: ${kStudyDocument.documentID}');
-                //kDAlert(
-                //    context, _deleteAlertW(context, kStudyDocument.documentID));
-                kDAlert(context, _deleteAlertW(context, kStudyDocument.id));
+                //kDAlert(context, _deleteAlertW(context, kStudyDocument.id));
+                animatedCustomNonDismissibleAlert(
+                    context, _deleteAlertW(context, kStudyDocument.id));
               }
             },
           ),
@@ -1259,7 +1459,7 @@ class KgmsStudyContentForm extends StatefulWidget {
   final bool isDelete;
   final CollectionReference kStudyCollectionRef;
 
-  KgmsStudyContentForm(
+  const KgmsStudyContentForm(
       {Key key,
       this.kStudyDocument,
       @required this.isDelete,
@@ -1271,12 +1471,12 @@ class KgmsStudyContentForm extends StatefulWidget {
 }
 
 class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
-  GlobalKey<FormState> _formKey;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   String _idCtrl;
-  TextEditingController _headerCtrl;
-  TextEditingController _subHeaderCtrl;
-  TextEditingController _contentCtrl;
+  final TextEditingController _headerCtrl = TextEditingController();
+  final TextEditingController _subHeaderCtrl = TextEditingController();
+  final TextEditingController _contentCtrl = TextEditingController();
 
   final _subHeaderFocus = FocusNode();
   final _contentFocus = FocusNode();
@@ -1286,8 +1486,11 @@ class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
   @override
   void initState() {
     super.initState();
-    _formKey = GlobalKey<FormState>();
+    //_formKey = GlobalKey<FormState>();
+    init();
+  }
 
+  Future<void> init() {
     for (var i = 3; i < 16; i++) {
       _studyNumList.add(i.toString());
     }
@@ -1295,17 +1498,23 @@ class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
     _idCtrl = widget.kStudyDocument != null
         ? widget.kStudyDocument['studyNumber'].toString()
         : '1';
-    _headerCtrl = TextEditingController(
-        text: widget.kStudyDocument != null
-            ? widget.kStudyDocument['header']
-            : '');
-    _subHeaderCtrl = TextEditingController(
-        text: widget.kStudyDocument != null
-            ? widget.kStudyDocument['subHeader']
-            : '');
-    _contentCtrl = TextEditingController(
-        text:
-            widget.kStudyDocument != null ? widget.kStudyDocument['desc'] : '');
+    //_headerCtrl = TextEditingController(
+    //    text: widget.kStudyDocument != null
+    //        ? widget.kStudyDocument['header']
+    //        : '');
+    //_subHeaderCtrl = TextEditingController(
+    //    text: widget.kStudyDocument != null
+    //        ? widget.kStudyDocument['subHeader']
+    //        : '');
+    //_contentCtrl = TextEditingController(
+    //    text:
+    //        widget.kStudyDocument != null ? widget.kStudyDocument['desc'] : '');
+    _headerCtrl.text =
+        widget.kStudyDocument != null ? widget.kStudyDocument['header'] : '';
+    _subHeaderCtrl.text =
+        widget.kStudyDocument != null ? widget.kStudyDocument['subHeader'] : '';
+    _contentCtrl.text =
+        widget.kStudyDocument != null ? widget.kStudyDocument['desc'] : '';
   }
 
   @override
@@ -1313,7 +1522,7 @@ class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
     _headerCtrl.dispose();
     _subHeaderCtrl.dispose();
     _contentCtrl.dispose();
-    _formKey = null;
+    //_formKey = null;
     super.dispose();
   }
 
@@ -1323,250 +1532,257 @@ class _KgmsStudyContentFormState extends State<KgmsStudyContentForm> {
       key: _formKey,
       child: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: DropdownButtonFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Study No.*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  border: OutlineInputBorder(),
-                ),
-                value: _idCtrl,
-                icon: Icon(Icons.arrow_downward),
-                iconSize: 24,
-                elevation: 10,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                  fontSize: 17,
-                ),
-                onChanged: ((String newValue) {
-                  setState(() {
-                    _idCtrl = newValue;
-                  });
-                }),
-                items:
-                    _studyNumList.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: Colors.purple,
-                      ),
+        child: Theme(
+          data: ThemeData(
+            primaryColor: Colors.blueAccent,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: DropdownButtonFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Study No.*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 15),
-              child: TextFormField(
-                controller: _headerCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Header cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Header*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
+                    border: OutlineInputBorder(),
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
-                ),
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_subHeaderFocus);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: TextFormField(
-                controller: _subHeaderCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Sub Header cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Sub Header*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
+                  value: _idCtrl,
+                  icon: const Icon(Icons.arrow_downward),
+                  iconSize: 24,
+                  elevation: 10,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                    fontSize: 17,
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+                  onChanged: ((String newValue) {
+                    setState(() {
+                      _idCtrl = newValue;
+                    });
+                  }),
+                  items: _studyNumList
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          color: Colors.purple,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                focusNode: _subHeaderFocus,
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_contentFocus);
-                },
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: TextFormField(
-                controller: _contentCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Content cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Content*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: TextFormField(
+                  controller: _headerCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Header cannot be empty !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Header*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 25, horizontal: 10),
+                  ),
+                  style: const TextStyle(
                     fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (value) {
+                    FocusScope.of(context).requestFocus(_subHeaderFocus);
+                  },
                 ),
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                textInputAction: TextInputAction.newline,
-                maxLines: 10,
-                minLines: 4,
-                focusNode: _contentFocus,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 17.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: RaisedButton.icon(
-                  onPressed: () async {
-                    if (_formKey.currentState.validate()) {
-                      // print('Save Study');
-                      bool _internet = await isInternetAvailable();
-                      if (_internet) {
-                        final KCircularProgress cp =
-                            KCircularProgress(ctx: context);
-                        cp.showCircularProgress();
-                        if (widget.isDelete) {
-                          //print('Update Study');
-                          bool _isUpdate = false;
-                          var kDataMap = Map<String, dynamic>();
-                          if (_idCtrl !=
-                              widget.kStudyDocument['studyNumber'].toString()) {
-                            _isUpdate = true;
-                            kDataMap['studyNumber'] = int.parse(_idCtrl);
-                          }
-                          if (_headerCtrl.text !=
-                              widget.kStudyDocument['header']) {
-                            _isUpdate = true;
-                            kDataMap['header'] = _headerCtrl.text;
-                          }
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: TextFormField(
+                  controller: _subHeaderCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Sub Header cannot be empty !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Sub Header*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 25, horizontal: 10),
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
+                  ),
+                  focusNode: _subHeaderFocus,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (value) {
+                    FocusScope.of(context).requestFocus(_contentFocus);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: TextFormField(
+                  controller: _contentCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Content cannot be empty !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Content*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 30, horizontal: 10),
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
+                  ),
+                  textInputAction: TextInputAction.newline,
+                  maxLines: 10,
+                  minLines: 4,
+                  focusNode: _contentFocus,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 17.0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: RaisedButton.icon(
+                    onPressed: () async {
+                      if (_formKey.currentState.validate()) {
+                        // print('Save Study');
+                        bool _internet = await isInternetAvailable();
+                        if (_internet) {
+                          final KCircularProgress cp =
+                              KCircularProgress(ctx: context);
+                          cp.showCircularProgress();
+                          if (widget.isDelete) {
+                            //print('Update Study');
+                            bool _isUpdate = false;
+                            var kDataMap = Map<String, dynamic>();
+                            if (_idCtrl !=
+                                widget.kStudyDocument['studyNumber']
+                                    .toString()) {
+                              _isUpdate = true;
+                              kDataMap['studyNumber'] = int.parse(_idCtrl);
+                            }
+                            if (_headerCtrl.text !=
+                                widget.kStudyDocument['header']) {
+                              _isUpdate = true;
+                              kDataMap['header'] = _headerCtrl.text;
+                            }
 
-                          if (_subHeaderCtrl.text !=
-                              widget.kStudyDocument['subHeader']) {
-                            _isUpdate = true;
-                            kDataMap['subHeader'] = _subHeaderCtrl.text;
-                          }
+                            if (_subHeaderCtrl.text !=
+                                widget.kStudyDocument['subHeader']) {
+                              _isUpdate = true;
+                              kDataMap['subHeader'] = _subHeaderCtrl.text;
+                            }
 
-                          if (_contentCtrl.text !=
-                              widget.kStudyDocument['desc']) {
-                            _isUpdate = true;
-                            kDataMap['desc'] = _contentCtrl.text;
-                          }
+                            if (_contentCtrl.text !=
+                                widget.kStudyDocument['desc']) {
+                              _isUpdate = true;
+                              kDataMap['desc'] = _contentCtrl.text;
+                            }
 
-                          if (_isUpdate) {
-                            try {
-                              //await widget.kStudyCollectionRef
-                              //    .document(widget.kStudyDocument.documentID)
-                              //    .updateData(kDataMap);
-                              await widget.kStudyCollectionRef
-                                  .doc(widget.kStudyDocument.id)
-                                  .update(kDataMap);
+                            if (_isUpdate) {
+                              try {
+                                //await widget.kStudyCollectionRef
+                                //    .document(widget.kStudyDocument.documentID)
+                                //    .updateData(kDataMap);
+                                await widget.kStudyCollectionRef
+                                    .doc(widget.kStudyDocument.id)
+                                    .update(kDataMap);
+                                cp.closeProgress();
+                                Navigator.pop(context, 'Update success..!!');
+                              } catch (e) {
+                                cp.closeProgress();
+                                Scaffold.of(context).showSnackBar(kSnackbar(
+                                    'Update unsuccessful. Please check !'));
+                              }
+                            } else {
                               cp.closeProgress();
-                              Navigator.pop(context, 'Update success..!!');
+                              Scaffold.of(context).showSnackBar(
+                                  kSnackbar('Nothing to update..!!'));
+                            }
+                          } else {
+                            // print('New Study');
+                            var kDataMap = Map<String, dynamic>();
+                            kDataMap['studyNumber'] = int.parse(_idCtrl);
+                            kDataMap['header'] = _headerCtrl.text;
+                            kDataMap['subHeader'] = _subHeaderCtrl.text;
+                            kDataMap['desc'] = _contentCtrl.text;
+
+                            try {
+                              final DocumentReference _dR = await widget
+                                  .kStudyCollectionRef
+                                  .add(kDataMap);
+                              cp.closeProgress();
+                              if (_dR != null)
+                                Navigator.pop(context, 'New study added...!!');
+                              else
+                                Scaffold.of(context).showSnackBar(kSnackbar(
+                                    'New study unsuccessful. Please check !'));
                             } catch (e) {
                               cp.closeProgress();
                               Scaffold.of(context).showSnackBar(kSnackbar(
-                                  'Update unsuccessful. Please check !'));
+                                  'New study unsuccessful. Please check !'));
                             }
-                          } else {
-                            cp.closeProgress();
-                            Scaffold.of(context).showSnackBar(
-                                kSnackbar('Nothing to update..!!'));
                           }
                         } else {
-                          // print('New Study');
-                          var kDataMap = Map<String, dynamic>();
-                          kDataMap['studyNumber'] = int.parse(_idCtrl);
-                          kDataMap['header'] = _headerCtrl.text;
-                          kDataMap['subHeader'] = _subHeaderCtrl.text;
-                          kDataMap['desc'] = _contentCtrl.text;
-
-                          try {
-                            final DocumentReference _dR =
-                                await widget.kStudyCollectionRef.add(kDataMap);
-                            cp.closeProgress();
-                            if (_dR != null)
-                              Navigator.pop(context, 'New study added...!!');
-                            else
-                              Scaffold.of(context).showSnackBar(kSnackbar(
-                                  'New study unsuccessful. Please check !'));
-                          } catch (e) {
-                            cp.closeProgress();
-                            Scaffold.of(context).showSnackBar(kSnackbar(
-                                'New study unsuccessful. Please check !'));
-                          }
+                          kAlert(context, noInternetWidget);
                         }
-                      } else {
-                        kAlert(context, noInternetWidget);
                       }
-                    }
-                  },
-                  label: Text(
-                    'Submit',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 18,
+                    },
+                    label: Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                      ),
                     ),
+                    icon: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: const Icon(Icons.save, size: 28),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    splashColor: Colors.yellow,
+                    color: Colors.green,
                   ),
-                  icon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: const Icon(Icons.save, size: 28),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                  ),
-                  splashColor: Colors.yellow,
-                  color: Colors.green,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

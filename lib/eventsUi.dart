@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'self.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'
+    show DocumentSnapshot, DocumentReference;
+//import 'self.dart';
+import 'src/kUtil.dart';
+import 'src/firestoreService.dart';
 import 'dart:async';
 
-//final kEventsCollectionRef = Firestore.instance.collection('kgms-events');
-final kEventsCollectionRef =
-    FirebaseFirestore.instance.collection('kgms-events');
+//final kEventsCollectionRef =
+//    FirebaseFirestore.instance.collection('kgms-events');
+final kEventsCollectionRef = firebaseFirestore.collection('kgms-events');
 
 class _TotalEvents {
   int _totEvents = 7;
@@ -283,9 +286,9 @@ class KgmsEventsFSDAppBar extends StatelessWidget
                 Scaffold.of(context)
                     .showSnackBar(kSnackbar('Cannot delete new event.'));
               } else {
-                // print('delete doc: ${document.documentID}');
-                //kDAlert(context, _deleteAlertW(context, document.documentID));
-                kDAlert(context, _deleteAlertW(context, document.id));
+                //kDAlert(context, _deleteAlertW(context, document.id));
+                animatedCustomNonDismissibleAlert(
+                    context, _deleteAlertW(context, document.id));
               }
             },
           ),
@@ -404,259 +407,266 @@ class _KgmsEventsFormState extends State<KgmsEventsForm> {
       key: _formKey,
       child: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: Column(
-          // crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: DropdownButtonFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Event Id*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  border: OutlineInputBorder(),
-                ),
-                value: _idCtrl,
-                icon: Icon(Icons.arrow_downward),
-                iconSize: 24,
-                elevation: 10,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                  fontSize: 17,
-                ),
-                onChanged: ((String newValue) {
-                  setState(() {
-                    _idCtrl = newValue;
-                  });
-                }),
-                items:
-                    _eventNumList.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: Colors.purple,
-                      ),
+        child: Theme(
+          data: ThemeData(
+            primaryColor: Colors.blueAccent,
+          ),
+          child: Column(
+            // crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: DropdownButtonFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Event Id*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: TextFormField(
-                controller: _headerCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Header cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Header*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
+                    border: OutlineInputBorder(),
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
-                ),
-                // initialValue: widget.em.title,
-                // initialValue:
-                //     widget.document != null ? widget.document['header'] : '',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_subtitleFocus);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: TextFormField(
-                controller: _subHeaderCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Sub header cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Sub Header*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
+                  value: _idCtrl,
+                  icon: Icon(Icons.arrow_downward),
+                  iconSize: 24,
+                  elevation: 10,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                    fontSize: 17,
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
+                  onChanged: ((String newValue) {
+                    setState(() {
+                      _idCtrl = newValue;
+                    });
+                  }),
+                  items: _eventNumList
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          color: Colors.purple,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
-                // initialValue: widget.em.subtitle,
-                // initialValue:
-                //     widget.document != null ? widget.document['date'] : '',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                focusNode: _subtitleFocus,
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_descFocus);
-                },
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: TextFormField(
-                controller: _descCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'Description cannot be empty !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Description*',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: TextFormField(
+                  controller: _headerCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Header cannot be empty !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Header*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 30, horizontal: 10),
+                  ),
+                  // initialValue: widget.em.title,
+                  // initialValue:
+                  //     widget.document != null ? widget.document['header'] : '',
+                  style: const TextStyle(
                     fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
                   ),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (value) {
+                    FocusScope.of(context).requestFocus(_subtitleFocus);
+                  },
                 ),
-                // initialValue: widget.em.desc,
-                // initialValue:
-                //     widget.document != null ? widget.document['desc'] : '',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 17,
-                  letterSpacing: 0.9,
-                ),
-                textInputAction: TextInputAction.newline,
-                maxLines: 10,
-                minLines: 4,
-                focusNode: _descFocus,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 17.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: RaisedButton.icon(
-                  onPressed: () async {
-                    if (_formKey.currentState.validate()) {
-                      bool _internet = await isInternetAvailable();
-                      if (_internet) {
-                        final KCircularProgress cp =
-                            KCircularProgress(ctx: context);
-                        cp.showCircularProgress();
-                        if (widget.isDelete) {
-                          bool _isUpdate = false;
-                          var kDataMap = Map<String, dynamic>();
-                          // print('Editable Event');
-                          if (_idCtrl != widget.document['tagId'].toString()) {
-                            // print('update event id');
-                            _isUpdate = true;
-                            kDataMap['tagId'] = int.parse(_idCtrl);
-                          }
-                          if (_headerCtrl.text != widget.document['header']) {
-                            // print('update header');
-                            _isUpdate = true;
-                            kDataMap['header'] = _headerCtrl.text;
-                          }
-                          if (_subHeaderCtrl.text != widget.document['date']) {
-                            // print('update sub header');
-                            _isUpdate = true;
-                            kDataMap['date'] = _subHeaderCtrl.text;
-                          }
-                          if (_descCtrl.text != widget.document['desc']) {
-                            // print('update desc');
-                            _isUpdate = true;
-                            kDataMap['desc'] = _descCtrl.text;
-                          }
-                          if (_isUpdate) {
-                            // print(kDataMap);
-                            // print(
-                            //     'submit update ${widget.document.documentID}');
-                            try {
-                              //await kEventsCollectionRef
-                              //    .document(widget.document.documentID)
-                              //    .updateData(kDataMap);
-                              await kEventsCollectionRef
-                                  .doc(widget.document.id)
-                                  .update(kDataMap);
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: TextFormField(
+                  controller: _subHeaderCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Sub header cannot be empty !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Sub Header*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 30, horizontal: 10),
+                  ),
+                  // initialValue: widget.em.subtitle,
+                  // initialValue:
+                  //     widget.document != null ? widget.document['date'] : '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
+                  ),
+                  focusNode: _subtitleFocus,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (value) {
+                    FocusScope.of(context).requestFocus(_descFocus);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: TextFormField(
+                  controller: _descCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Description cannot be empty !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Description*',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 30, horizontal: 10),
+                  ),
+                  // initialValue: widget.em.desc,
+                  // initialValue:
+                  //     widget.document != null ? widget.document['desc'] : '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    letterSpacing: 0.9,
+                  ),
+                  textInputAction: TextInputAction.newline,
+                  maxLines: 10,
+                  minLines: 4,
+                  focusNode: _descFocus,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 17.0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: RaisedButton.icon(
+                    onPressed: () async {
+                      if (_formKey.currentState.validate()) {
+                        bool _internet = await isInternetAvailable();
+                        if (_internet) {
+                          final KCircularProgress cp =
+                              KCircularProgress(ctx: context);
+                          cp.showCircularProgress();
+                          if (widget.isDelete) {
+                            bool _isUpdate = false;
+                            var kDataMap = Map<String, dynamic>();
+                            // print('Editable Event');
+                            if (_idCtrl !=
+                                widget.document['tagId'].toString()) {
+                              // print('update event id');
+                              _isUpdate = true;
+                              kDataMap['tagId'] = int.parse(_idCtrl);
+                            }
+                            if (_headerCtrl.text != widget.document['header']) {
+                              // print('update header');
+                              _isUpdate = true;
+                              kDataMap['header'] = _headerCtrl.text;
+                            }
+                            if (_subHeaderCtrl.text !=
+                                widget.document['date']) {
+                              // print('update sub header');
+                              _isUpdate = true;
+                              kDataMap['date'] = _subHeaderCtrl.text;
+                            }
+                            if (_descCtrl.text != widget.document['desc']) {
+                              // print('update desc');
+                              _isUpdate = true;
+                              kDataMap['desc'] = _descCtrl.text;
+                            }
+                            if (_isUpdate) {
+                              // print(kDataMap);
+                              // print(
+                              //     'submit update ${widget.document.documentID}');
+                              try {
+                                //await kEventsCollectionRef
+                                //    .document(widget.document.documentID)
+                                //    .updateData(kDataMap);
+                                await kEventsCollectionRef
+                                    .doc(widget.document.id)
+                                    .update(kDataMap);
+                                cp.closeProgress();
+                                Navigator.pop(context, 'Update success..!!');
+                              } catch (e) {
+                                cp.closeProgress();
+                                Scaffold.of(context).showSnackBar(kSnackbar(
+                                    'Update unsuccessful. Please check !'));
+                              }
+                            } else {
+                              // print('nothing to update');
                               cp.closeProgress();
-                              Navigator.pop(context, 'Update success..!!');
+                              Scaffold.of(context).showSnackBar(
+                                  kSnackbar('Nothing to update..!!'));
+                            }
+                          } else {
+                            // print('New Event');
+                            var kDataMap = Map<String, dynamic>();
+                            kDataMap['tagId'] = int.parse(_idCtrl);
+                            kDataMap['header'] = _headerCtrl.text;
+                            kDataMap['date'] = _subHeaderCtrl.text;
+                            kDataMap['desc'] = _descCtrl.text;
+                            try {
+                              final DocumentReference _dR =
+                                  await kEventsCollectionRef.add(kDataMap);
+                              cp.closeProgress();
+                              if (_dR != null)
+                                Navigator.pop(context, 'New event added...!!');
+                              else
+                                Scaffold.of(context).showSnackBar(kSnackbar(
+                                    'New event unsuccessful. Please check !'));
                             } catch (e) {
                               cp.closeProgress();
                               Scaffold.of(context).showSnackBar(kSnackbar(
-                                  'Update unsuccessful. Please check !'));
+                                  'New event unsuccessful. Please check !'));
                             }
-                          } else {
-                            // print('nothing to update');
-                            cp.closeProgress();
-                            Scaffold.of(context).showSnackBar(
-                                kSnackbar('Nothing to update..!!'));
                           }
                         } else {
-                          // print('New Event');
-                          var kDataMap = Map<String, dynamic>();
-                          kDataMap['tagId'] = int.parse(_idCtrl);
-                          kDataMap['header'] = _headerCtrl.text;
-                          kDataMap['date'] = _subHeaderCtrl.text;
-                          kDataMap['desc'] = _descCtrl.text;
-                          try {
-                            final DocumentReference _dR =
-                                await kEventsCollectionRef.add(kDataMap);
-                            cp.closeProgress();
-                            if (_dR != null)
-                              Navigator.pop(context, 'New event added...!!');
-                            else
-                              Scaffold.of(context).showSnackBar(kSnackbar(
-                                  'New event unsuccessful. Please check !'));
-                          } catch (e) {
-                            cp.closeProgress();
-                            Scaffold.of(context).showSnackBar(kSnackbar(
-                                'New event unsuccessful. Please check !'));
-                          }
+                          kAlert(context, noInternetWidget);
                         }
-                      } else {
-                        kAlert(context, noInternetWidget);
                       }
-                    }
-                  },
-                  label: Text(
-                    'Submit',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 18,
+                    },
+                    label: const Text(
+                      'Submit',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                      ),
                     ),
+                    icon: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: const Icon(Icons.save, size: 28),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    splashColor: Colors.yellow,
+                    color: Colors.green,
                   ),
-                  icon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: const Icon(Icons.save, size: 28),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                  ),
-                  splashColor: Colors.yellow,
-                  color: Colors.green,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

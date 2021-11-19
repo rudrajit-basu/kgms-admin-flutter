@@ -1,15 +1,31 @@
 import 'package:flutter/material.dart';
-import 'self.dart';
-//import 'package:medcorder_audio/medcorder_audio.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_sound/flutter_sound.dart';
-//import 'package:path_provider/path_provider.dart';
+//import 'self.dart';
+import 'src/kUtil.dart';
+import 'package:flutter/services.dart' show MethodChannel, PlatformException;
+import 'package:flutter_sound/flutter_sound.dart'
+    show
+        FlutterSoundRecorder,
+        FlutterSoundPlayer,
+        RecordingDisposition,
+        FlutterSoundHelper,
+        Codec;
 import 'dart:async';
 import 'package:path/path.dart';
 import 'dart:io';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart'
+    show
+        ReassembleHandler,
+        Provider,
+        ChangeNotifierProvider,
+        Consumer,
+        ChangeNotifierProvider,
+        ReadContext,
+        WatchContext;
 import 'dart:convert';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_storage/firebase_storage.dart'
+    show Reference, FirebaseStorage, TaskState;
+//import 'package:medcorder_audio/medcorder_audio.dart';
+//import 'package:path_provider/path_provider.dart';
 
 final Reference storageReference =
     FirebaseStorage.instance.ref().child('kgms-voice-notes');
@@ -27,23 +43,24 @@ class StudyVoiceAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          const Text('Voice :'),
-          Text('$className', style: TextStyle(fontSize: 17.5)),
-        ],
-      ),
+      title: Text('Voice : $className'),
+      //Column(
+      //  crossAxisAlignment: CrossAxisAlignment.start,
+      //  mainAxisSize: MainAxisSize.max,
+      //  children: <Widget>[
+      //    const Text('Voice :'),
+      //    Text('$className', style: TextStyle(fontSize: 17.5)),
+      //  ],
+      //),
       actions: <Widget>[
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: IconButton(
-            icon: const Icon(Icons.cached_rounded, size: 30),
+            icon: const Icon(Icons.update_rounded, size: 30),
             tooltip: 'list voice from cache',
             onPressed: () {
               //print('add new voice from files !');
-              kDAlert(
+              animatedCustomNonDismissibleAlert(
                   context,
                   _VoiceFilesFromCacheWrapper(
                       classId: classId,
@@ -76,7 +93,8 @@ class StudyVoiceAppBar extends StatelessWidget implements PreferredSizeWidget {
 class StudyVoiceWrapper extends StatelessWidget {
   final String className;
   final String classId;
-  StudyVoiceWrapper({Key key, @required this.className, @required this.classId})
+  const StudyVoiceWrapper(
+      {Key key, @required this.className, @required this.classId})
       : super(key: key);
 
   @override
@@ -168,7 +186,7 @@ class VoiceItemsModel with ChangeNotifier implements ReassembleHandler {
 class StudyVoice extends StatelessWidget {
   final String className;
   final String classId;
-  StudyVoice({Key key, @required this.className, @required this.classId})
+  const StudyVoice({Key key, @required this.className, @required this.classId})
       : super(key: key);
 
   @override
@@ -190,7 +208,7 @@ class StudyVoice extends StatelessWidget {
               children: <Widget>[
                 RaisedButton.icon(
                   onPressed: () async {
-                    kDAlert(
+                    animatedCustomNonDismissibleAlert(
                         context,
                         _VoiceRecorderPlayer(
                             classId: classId,
@@ -251,7 +269,7 @@ class StudyVoice extends StatelessWidget {
 
 class StudyVoiceBody extends StatelessWidget {
   final String classId;
-  StudyVoiceBody({Key key, @required this.classId}) : super(key: key);
+  const StudyVoiceBody({Key key, @required this.classId}) : super(key: key);
 
   Card _loadingTile(String msg) => Card(
         color: Colors.orange[300],
@@ -401,7 +419,7 @@ class StudyVoiceBody extends StatelessWidget {
                           String sUrl = cast<String>(downloadUrl);
                           cp.closeProgress();
                           //print('sUrl --> $sUrl');
-                          kDAlert(context,
+                          animatedCustomNonDismissibleAlert(context,
                               _VoicePlayer(trackUrl: sUrl, fileName: fileName));
                         } else {
                           kAlert(context, noInternetWidget);
@@ -443,7 +461,7 @@ class StudyVoiceBody extends StatelessWidget {
                     onPressed: () {
                       if (fileType == 'voice') {
                         print('remove voice file --> $fileName');
-                        kDAlert(
+                        animatedCustomNonDismissibleAlert(
                             context, _deleteAlertW(context, classId, fileName));
                       }
                     },
@@ -1564,6 +1582,8 @@ String _printDuration(Duration duration) {
   return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
 }
 
+final animeBoolAlert = animatedCustomNonDismissibleAlertT<bool>();
+
 class _VoiceFilesFromCache extends StatelessWidget {
   final String classId;
   final String className;
@@ -1755,7 +1775,8 @@ class _VoiceFilesFromCache extends StatelessWidget {
                       var _fn = _deleteFileFromCache(filePath);
                       var _msg =
                           'Are you sure to remove: ${_getFileNameFromPath(filePath)}';
-                      kDAlert(context, _getAlertDialog(context, _msg, _fn));
+                      animatedCustomNonDismissibleAlert(
+                          context, _getAlertDialog(context, _msg, _fn));
                     },
                     style: ButtonStyle(
                       foregroundColor: MaterialStateProperty.all<Color>(
@@ -1777,7 +1798,7 @@ class _VoiceFilesFromCache extends StatelessWidget {
                         'filePath': filePath,
                         'fileDuration': dur,
                       };
-                      var result = await _showDialog(
+                      var result = await animeBoolAlert(
                           context,
                           _VoiceRecorderPlayer(
                               classId: classId,
@@ -1811,23 +1832,23 @@ class _VoiceFilesFromCache extends StatelessWidget {
         ),
       );
 
-  Future<bool> _showDialog(BuildContext ctx, Widget widg) async {
-    return showDialog<bool>(
-      context: ctx,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return GestureDetector(
-          onTap: () async {
-            FocusScopeNode currentFocus = FocusScope.of(context);
-            if (!currentFocus.hasPrimaryFocus) {
-              currentFocus.unfocus();
-            }
-          },
-          child: widg,
-        );
-      },
-    );
-  }
+  //Future<bool> _showDialog(BuildContext ctx, Widget widg) async {
+  //  return showDialog<bool>(
+  //    context: ctx,
+  //    barrierDismissible: false,
+  //    builder: (BuildContext context) {
+  //      return GestureDetector(
+  //        onTap: () async {
+  //          FocusScopeNode currentFocus = FocusScope.of(context);
+  //          if (!currentFocus.hasPrimaryFocus) {
+  //            currentFocus.unfocus();
+  //          }
+  //        },
+  //        child: widg,
+  //      );
+  //    },
+  //  );
+  //}
 
   Widget _loadCacheVoiceFileList(BuildContext context) =>
       Consumer<CacheFileItemModel>(builder: (context, snapshot, _) {
@@ -1905,13 +1926,14 @@ class _VoiceFilesFromCache extends StatelessWidget {
       ),
       actions: <Widget>[
         ElevatedButton(
-          onPressed: () async {
-            print('Delete All files !');
+          onPressed: () {
+            //print('Delete All files !');
             var fList = context.read<CacheFileItemModel>().voiceItems;
             //print(fList.toString());
             var _fn = _deleteAllFilesFromCache(fList);
             var _msg = 'Are you sure to remove: \n ** All files';
-            kDAlert(context, _getAlertDialog(context, _msg, _fn));
+            animatedCustomNonDismissibleAlert(
+                context, _getAlertDialog(context, _msg, _fn));
           },
           child: const Text('Delete All',
               style: TextStyle(
@@ -1964,7 +1986,7 @@ class _VoiceFilesFromCacheWrapper extends StatelessWidget {
   final String className;
   final Function(String) onSuccessfulUpload;
   final Function getMaxVoiceCount;
-  _VoiceFilesFromCacheWrapper(
+  const _VoiceFilesFromCacheWrapper(
       {Key key,
       @required this.classId,
       @required this.className,

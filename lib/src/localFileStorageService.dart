@@ -3,24 +3,13 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert' as convert;
 
-const _fileName = 'kgmsData.txt';
+//const _fileName = 'kgmsImageNetworkData';
 
 class LocalFileServ {
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;
   }
-
-  //Future<File> get _localFile async {
-  //  final path = await _localPath;
-  //  print('file path ---> $path');
-  //  File file = File('$path/$_fileName');
-  //  if (!file.existsSync()) {
-  //    file.createSync();
-  //    print('LocalFileServ --> file created !');
-  //  }
-  //  return file;
-  //}
 
   Future<bool> writeKeyWithData(String key, String data) async {
     if (key != null && data != null && !key.isEmpty && !data.isEmpty) {
@@ -62,6 +51,40 @@ class LocalFileServ {
     }
     return result;
   }
+
+  //Future<bool> writeINMapToFile(Map<String, Map<String, String>> mapData) async {
+  //  try {
+  //    final path = await _localPath;
+  //    final file = File('$path/$_fileName');
+  //    final String mapDataStr = convert.jsonEncode(mapData);
+  //    await file.writeAsString(mapDataStr);
+  //    return true;
+  //  } catch (e) {
+  //    print('from writeMapToFile --> error --> $e');
+  //  }
+  //  return false;
+  //}
+
+  //Future<Map> getINMapFromFile(String classId) async {
+  //  try {
+  //    final path = await _localPath;
+  //    final file = File('$path/$_fileName');
+  //    if (file.existsSync()) {
+  //      final mapDataStr = await file.readAsString();
+  //      final Map<String, dynamic> mapDataDynamic =
+  //          convert.jsonDecode(mapDataStr);
+  //      if (mapDataDynamic.containsKey(classId)) {
+  //        return (mapDataDynamic[classId] as Map).cast<String, String>();
+  //      }
+  //    } else {
+  //      print('from getMapFromFile file not exists !');
+  //    }
+  //  } catch (e) {
+  //    print('from getMapFromFile --> error --> $e');
+  //  }
+  //  return null;
+  //}
+
 }
 
-LocalFileServ fileServ = LocalFileServ();
+final LocalFileServ fileServ = LocalFileServ();

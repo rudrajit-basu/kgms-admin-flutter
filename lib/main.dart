@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
-import 'eventsUi.dart';
-import 'studyUi.dart';
-import 'self.dart';
+import 'eventsUi.dart' show KgmsEvents;
+import 'studyUi.dart' show KgmsClassStudy;
+//import 'self.dart';
+import 'src/kUtil.dart';
+import 'src/localCacheService.dart';
+import 'src/localFileStorageService.dart';
+import 'src/firebaseService.dart';
+import 'src/firestoreService.dart';
+import 'src/localDataStoreService.dart';
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
-import 'admissionUi.dart';
-import 'accountsUi.dart';
-import 'studentsUi.dart';
-import 'package:provider/provider.dart';
+import 'admissionUi.dart' show KgmsAdmission;
+import 'studentsUi.dart' show KgmsStudentsWarpper;
+import 'collectionReportUi.dart' show KgmsCollectionReport;
+import 'collectionTransactionUi.dart' show KgmsCollectionTransactionWrapper;
+import 'package:provider/provider.dart'
+    show
+        ReassembleHandler,
+        Provider,
+        ChangeNotifierProvider,
+        Consumer,
+        ChangeNotifierProvider;
+import 'package:flutter/services.dart'
+    show FilteringTextInputFormatter, TextInputFormatter;
+import 'dart:convert' as convert;
+import 'package:flutter_dotenv/flutter_dotenv.dart' as DotEnv;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,12 +85,14 @@ class KgmsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kgms Admin',
-      theme: ThemeData(
-        primarySwatch: Colors.yellow,
+    return LifeCycleManager(
+      child: MaterialApp(
+        title: 'Kgms Admin',
+        theme: ThemeData(
+          primarySwatch: Colors.yellow,
+        ),
+        home: _loadMainPage(),
       ),
-      home: _loadMainPage(),
     );
   }
 }
@@ -139,22 +158,26 @@ class LoginModel with ChangeNotifier implements ReassembleHandler {
         _userId = uid;
         _isSignedIn = true;
         _isWaiting = false;
+        firestoreServ.startKgmsClassesSubscription();
         notifyListeners();
       } else {
         cacheServ.getUserName().then((uName) {
           _userName = uName;
           _isSignedIn = false;
           _isWaiting = false;
+          firestoreServ.stopKgmsClassesSubscription();
           notifyListeners();
         });
       }
     });
+    DotEnv.load(fileName: ".env");
   }
 
   void logIn(String uName) {
     print('user logged in --> $uName !');
     _userId = uName;
     _isSignedIn = true;
+    firestoreServ.startKgmsClassesSubscription();
     notifyListeners();
   }
 
@@ -163,6 +186,7 @@ class LoginModel with ChangeNotifier implements ReassembleHandler {
     cacheServ.getUserName().then((uName) {
       _userName = uName;
       _isSignedIn = false;
+      firestoreServ.stopKgmsClassesSubscription();
       notifyListeners();
     });
   }
@@ -258,28 +282,27 @@ class _KgmsLoginState extends State<KgmsLogin> {
   void dispose() {
     _uidCtrl.dispose();
     _passwdCtrl.dispose();
-    //fServ.signOut();
     // print("login disposed.....");
     super.dispose();
   }
 
-  void _loginNavigate(BuildContext context, KgmsMain kgm) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => kgm,
-      ),
-    );
-    cacheServ.getUserName().then((uName) {
-      this.setState(() {
-        _uidCtrl.text = uName;
-      });
-    });
-    //final prefs = await SharedPreferences.getInstance();
-    //this.setState(() {
-    //  _uidCtrl.text = prefs.getString('kUserName') ?? '';
-    //});
-  }
+  //void _loginNavigate(BuildContext context, KgmsMain kgm) async {
+  //  await Navigator.push(
+  //    context,
+  //    MaterialPageRoute(
+  //      builder: (context) => kgm,
+  //    ),
+  //  );
+  //  cacheServ.getUserName().then((uName) {
+  //    this.setState(() {
+  //      _uidCtrl.text = uName;
+  //    });
+  //  });
+  //  //final prefs = await SharedPreferences.getInstance();
+  //  //this.setState(() {
+  //  //  _uidCtrl.text = prefs.getString('kUserName') ?? '';
+  //  //});
+  //}
 
   @override
   Widget build(BuildContext context) {
@@ -287,146 +310,151 @@ class _KgmsLoginState extends State<KgmsLogin> {
       key: _loginFormKey,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: TextFormField(
-                controller: _uidCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'please enter valid email id !';
-                  } else if (!EmailValidator.validate(value)) {
-                    return 'please enter valid email id !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: '-> user id *',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black54,
-                  ),
-                  border: OutlineInputBorder(),
-                  focusedBorder:
-                      OutlineInputBorder(borderSide: BorderSide(width: 1.15)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-                  focusColor: Colors.blue,
-                  filled: true,
-                ),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.1,
-                ),
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                onFieldSubmitted: (value) {
-                  FocusScope.of(context).requestFocus(_paswFocus);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: TextFormField(
-                controller: _passwdCtrl,
-                validator: (value) {
-                  if (value.isEmpty) {
-                    return 'please enter password !';
-                  } else if (value.length < 6) {
-                    return 'password should be atleast 6 characters !';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  labelText: '-> password *',
-                  // hintText: 'Your kgms admin password !',
-                  labelStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black54,
-                  ),
-                  border: OutlineInputBorder(),
-                  focusedBorder:
-                      OutlineInputBorder(borderSide: BorderSide(width: 1.15)),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-                  focusColor: Colors.blue,
-                  filled: true,
-                ),
-                focusNode: _paswFocus,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.1,
-                ),
-                keyboardType: TextInputType.visiblePassword,
-                obscureText: true,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 25),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: RaisedButton.icon(
-                  //Login button
-                  onPressed: () async {
-                    if (_loginFormKey.currentState.validate()) {
-                      bool _internet = await isInternetAvailable();
-                      if (_internet) {
-                        final KCircularProgress cp =
-                            KCircularProgress(ctx: context);
-                        cp.showCircularProgress();
-                        bool _signIn =
-                            await fServ.signIn(_uidCtrl.text, _passwdCtrl.text);
-                        if (_signIn) {
-                          //SharedPreferences.getInstance().then((prefs) {
-                          //  prefs.setString('kUserName', _uidCtrl.text);
-                          //});
-                          cacheServ.setUserName(_uidCtrl.text).then((res) {
-                            print('Set user name result --> $res');
-                          });
-                          String _userEmail = await fServ.getCurrentUser();
-                          cp.closeProgress();
-                          Provider.of<LoginModel>(context, listen: false)
-                              .logIn(_userEmail);
-                          //_loginNavigate(context, KgmsMain(userN: _userEmail));
-                        } else {
-                          cp.closeProgress();
-                          kAlert(context, wrongLogin);
-                        }
-                      } else {
-                        kAlert(context, noInternetWidget);
-                      }
+        child: Theme(
+          data: ThemeData(
+            primaryColor: Colors.blueAccent,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: TextFormField(
+                  controller: _uidCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'please enter valid email id !';
+                    } else if (!EmailValidator.validate(value)) {
+                      return 'please enter valid email id !';
                     }
+                    return null;
                   },
-                  label: Text(
-                    'Login',
-                    style: TextStyle(
+                  decoration: const InputDecoration(
+                    labelText: '-> user id *',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      fontSize: 19,
-                      letterSpacing: 1,
+                      //color: Colors.black54,
                     ),
+                    border: OutlineInputBorder(),
+                    //focusedBorder:
+                    //    OutlineInputBorder(borderSide: BorderSide(width: 1.15)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 15),
+                    //focusColor: Colors.blue,
+                    //filled: true,
                   ),
-                  // textTheme: ButtonTextTheme.accent,
-                  // padding: const EdgeInsets.all(8.0),
-                  icon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: const Icon(Icons.local_florist, size: 30),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.1,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  splashColor: Colors.yellow,
-                  color: Colors.green,
-                  elevation: 3,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (value) {
+                    FocusScope.of(context).requestFocus(_paswFocus);
+                  },
                 ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: TextFormField(
+                  controller: _passwdCtrl,
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'please enter password !';
+                    } else if (value.length < 6) {
+                      return 'password should be atleast 6 characters !';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: '-> password *',
+                    // hintText: 'Your kgms admin password !',
+                    labelStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      //color: Colors.black54,
+                    ),
+                    border: OutlineInputBorder(),
+                    //focusedBorder:
+                    //    OutlineInputBorder(borderSide: BorderSide(width: 1.15)),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 15),
+                    //focusColor: Colors.blue,
+                    //filled: true,
+                  ),
+                  focusNode: _paswFocus,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.1,
+                  ),
+                  keyboardType: TextInputType.visiblePassword,
+                  obscureText: true,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 25),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: RaisedButton.icon(
+                    //Login button
+                    onPressed: () async {
+                      if (_loginFormKey.currentState.validate()) {
+                        bool _internet = await isInternetAvailable();
+                        if (_internet) {
+                          final KCircularProgress cp =
+                              KCircularProgress(ctx: context);
+                          cp.showCircularProgress();
+                          bool _signIn = await fServ.signIn(
+                              _uidCtrl.text, _passwdCtrl.text);
+                          if (_signIn) {
+                            //SharedPreferences.getInstance().then((prefs) {
+                            //  prefs.setString('kUserName', _uidCtrl.text);
+                            //});
+                            cacheServ.setUserName(_uidCtrl.text).then((res) {
+                              print('Set user name result --> $res');
+                            });
+                            String _userEmail = await fServ.getCurrentUser();
+                            cp.closeProgress();
+                            Provider.of<LoginModel>(context, listen: false)
+                                .logIn(_userEmail);
+                            //_loginNavigate(context, KgmsMain(userN: _userEmail));
+                          } else {
+                            cp.closeProgress();
+                            kAlert(context, wrongLogin);
+                          }
+                        } else {
+                          kAlert(context, noInternetWidget);
+                        }
+                      }
+                    },
+                    label: Text(
+                      'Login',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 19,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    // textTheme: ButtonTextTheme.accent,
+                    // padding: const EdgeInsets.all(8.0),
+                    icon: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: const Icon(Icons.local_florist, size: 30),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    splashColor: Colors.yellow,
+                    color: Colors.green,
+                    elevation: 3,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -439,21 +467,69 @@ class KgmsMain extends StatelessWidget {
   //final String _title = 'Kgms Admin';
   final String userN;
 
-  Widget _buildMainButtons(BuildContext context, String s, StatelessWidget slw,
-          IconData ic, bool checkInternet) =>
-      FloatingActionButton.extended(
-        label: Text(
-          '$s',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
-        ),
-        icon: Icon(
-          ic,
-          color: Colors.blue,
-          size: 25,
+  //FloatingActionButton _buildMainButtons(BuildContext context, String s,
+  //        Widget slw, IconData ic, bool checkInternet) =>
+  //    FloatingActionButton.extended(
+  //      label: Text(
+  //        '$s',
+  //        style: TextStyle(
+  //          color: Colors.black87,
+  //          fontWeight: FontWeight.bold,
+  //          fontSize: 17,
+  //        ),
+  //      ),
+  //      icon: Icon(
+  //        ic,
+  //        color: Colors.blue,
+  //        size: 25,
+  //      ),
+  //      splashColor: Colors.green,
+  //      elevation: 10,
+  //      shape: RoundedRectangleBorder(
+  //        borderRadius: BorderRadius.all(Radius.circular(18)),
+  //      ),
+  //      onPressed: () async {
+  //        if (slw != null) {
+  //          if (checkInternet) {
+  //            bool _internet = await isInternetAvailable();
+  //            if (_internet) {
+  //              Navigator.of(context).push(_createRoute(slw));
+  //            } else {
+  //              kAlert(context, noInternetWidget);
+  //            }
+  //          } else {
+  //            Navigator.of(context).push(_createRoute(slw));
+  //          }
+  //        }
+  //      },
+  //      heroTag: '$s',
+  //    );
+
+  FloatingActionButton _buildMainButtons(BuildContext context, String s,
+          Widget slw, IconData ic, bool checkInternet) =>
+      FloatingActionButton(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Icon(
+              ic,
+              color: Colors.blue,
+              size: 30,
+            ),
+            SizedBox(height: 5.0),
+            Text(
+              '$s',
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 17,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
         splashColor: Colors.green,
         elevation: 10,
@@ -477,10 +553,6 @@ class KgmsMain extends StatelessWidget {
         heroTag: '$s',
       );
 
-  // List<FloatingActionButton> ListMButtons(int count) => List.generate(
-  //     count,
-  //     (i) => _buildMainButtons(i));
-
   List<FloatingActionButton> _buildButtonList(BuildContext ctx) {
     //List<FloatingActionButton> fabList = new List();
     final List<FloatingActionButton> fabList = [];
@@ -488,14 +560,14 @@ class KgmsMain extends StatelessWidget {
         .add(_buildMainButtons(ctx, 'Event', KgmsEvents(), Icons.event, true));
     fabList.add(_buildMainButtons(
         ctx, 'Class', KgmsClassStudy(), Icons.meeting_room_rounded, true));
-    //fabList.add(_buildMainButtons(
-    //    ctx, 'Amission', KgmsAdmission(), Icons.business, false));
-    //fabList.add(_buildMainButtons(
-    //    ctx, 'Accounts', KgmsAccounts(), Icons.account_balance, false));
-    //fabList.add(
-    //    _buildMainButtons(ctx, 'Students', KgmsStudents(), Icons.face, false));
-    //fabList.add(_buildMainButtons(
-    //    ctx, 'Voice', StudyVoiceWrapper(), Icons.keyboard_voice, false));
+    fabList.add(_buildMainButtons(
+        ctx, 'Amission', KgmsAdmission(), Icons.business, true));
+    fabList.add(_buildMainButtons(
+        ctx, 'Students', KgmsStudentsWarpper(), Icons.face, true));
+    fabList.add(_buildMainButtons(ctx, 'Collection\nReport',
+        KgmsCollectionReport(), Icons.bar_chart, false));
+    fabList.add(_buildMainButtons(ctx, 'Daily\nTransaction',
+        KgmsCollectionTransactionWrapper(), Icons.timeline, false));
     return fabList;
   }
 
@@ -543,14 +615,35 @@ class KgmsMain extends StatelessWidget {
               height: 10.0,
             ),
             ListTile(
-                leading: const Icon(Icons.settings, size: 27),
-                title: const Text('Settings',
+                leading:
+                    const Icon(Icons.account_balance_wallet_outlined, size: 27),
+                title: const Text("Account Settings",
                     style: TextStyle(fontSize: 16, letterSpacing: 0.4)),
                 enabled: true,
                 onTap: () async {
                   //print('app settings');
                   //Navigator.pop(context);
-                  //kDAlert(context, _KgmsSettingsDialog());
+                  animatedCustomNonDismissibleAlert(
+                      context, _KgmsSettingsDialog());
+                }),
+            SizedBox(
+              height: 15.0,
+            ),
+            ListTile(
+                leading: const Icon(Icons.restore_outlined, size: 27),
+                title: const Text("Restore Student",
+                    style: TextStyle(fontSize: 16, letterSpacing: 0.4)),
+                enabled: true,
+                onTap: () async {
+                  print('Restore Student !');
+                  bool _internet = await isInternetAvailable();
+                  if (_internet) {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(_createRoute(
+                        KgmsStudentsWarpper(isRestoreStudent: true)));
+                  } else {
+                    kAlert(context, noInternetWidget);
+                  }
                 }),
             SizedBox(
               height: 15.0,
@@ -596,7 +689,7 @@ class KgmsMain extends StatelessWidget {
   }
 }
 
-Route _createRoute(StatelessWidget slw) {
+Route _createRoute(Widget slw) {
   return PageRouteBuilder(
     pageBuilder: (context, animation, secondaryAnimation) => slw,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -616,7 +709,7 @@ Route _createRoute(StatelessWidget slw) {
 }
 
 class _KgmsSettingsDialog extends StatefulWidget {
-  _KgmsSettingsDialog({Key key}) : super(key: key);
+  const _KgmsSettingsDialog({Key key}) : super(key: key);
 
   @override
   _KgmsSettingsDialogState createState() => _KgmsSettingsDialogState();
@@ -625,15 +718,45 @@ class _KgmsSettingsDialog extends StatefulWidget {
 class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  final TextEditingController _admissionFeeCtrl = TextEditingController();
+  final TextEditingController _tuitionFeeCtrl = TextEditingController();
+
   @override
   void initState() {
     super.initState();
+    Future.delayed(
+        const Duration(milliseconds: 1000),
+        () => fileServ.readDataByKey('kgmsSettings').then((data) {
+              if (data != 'nil') {
+                try {
+                  final _jsonObj = convert.jsonDecode(data);
+                  _admissionFeeCtrl.text = _jsonObj['admissionFee'];
+                  _tuitionFeeCtrl.text = _jsonObj['tuitionFee'];
+                } on FormatException catch (e) {
+                  print('getKgmsSettings data = $data and error = $e');
+                }
+              }
+            }));
   }
+
+  Map _accountsToJson() => {
+        'admissionFee': _admissionFeeCtrl.text,
+        'tuitionFee': _tuitionFeeCtrl.text,
+      };
 
   @override
   void dispose() {
+    _admissionFeeCtrl.dispose();
+    _tuitionFeeCtrl.dispose();
     super.dispose();
   }
+
+  //void clearKeyBoard(BuildContext context) async {
+  //  FocusScopeNode currentFocus = FocusScope.of(context);
+  //  if (!currentFocus.hasPrimaryFocus) {
+  //    currentFocus.unfocus();
+  //  }
+  //}
 
   @override
   Widget build(BuildContext context) {
@@ -663,6 +786,116 @@ class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
           ),
         ),
       ),
+      content: Container(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Theme(
+              data: ThemeData(
+                primaryColor: Colors.blueAccent,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    child: TextFormField(
+                      controller: _admissionFeeCtrl,
+                      validator: (value) {
+                        //if (value.isEmpty) {
+                        //  return 'Roll no. empty !';
+                        //}
+                        if (value.isEmpty) {
+                          return 'Admission fee cannot be empty !';
+                        } else if (!value.isEmpty && !isNumFromString(value)) {
+                          return 'not number !';
+                        } else if (int.tryParse(value) <= 0) {
+                          return 'not valid number';
+                        }
+                        return null;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Admission fee',
+                        labelStyle: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        errorStyle: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        border: OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 10),
+                      ),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 17,
+                        letterSpacing: 0.9,
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.digitsOnly,
+                      ], // Only numbers can be entered
+                      //textInputAction: TextInputAction.next,
+                      //onFieldSubmitted: (value) {
+                      //  FocusScope.of(context).requestFocus(_subtitleFocus);
+                      //},
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    child: TextFormField(
+                      controller: _tuitionFeeCtrl,
+                      validator: (value) {
+                        //if (value.isEmpty) {
+                        //  return 'Roll no. empty !';
+                        //}
+                        if (value.isEmpty) {
+                          return 'Tuition fee cannot be empty !';
+                        } else if (!value.isEmpty && !isNumFromString(value)) {
+                          return 'not number !';
+                        } else if (int.tryParse(value) <= 0) {
+                          return 'not valid number';
+                        }
+                        return null;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Tuition fee',
+                        labelStyle: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        errorStyle: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        border: OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 10),
+                      ),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 17,
+                        letterSpacing: 0.9,
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.digitsOnly,
+                      ], // Only numbers can be entered
+                      //textInputAction: TextInputAction.next,
+                      //onFieldSubmitted: (value) {
+                      //  FocusScope.of(context).requestFocus(_subtitleFocus);
+                      //},
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       actions: <Widget>[
         Container(
           width: double.maxFinite,
@@ -671,8 +904,23 @@ class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               ElevatedButton(
-                onPressed: () {
-                  print('save');
+                onPressed: () async {
+                  if (_formKey.currentState.validate()) {
+                    print('validate success');
+                    //Navigator.of(context).pop();
+                    final jsonStr = convert.jsonEncode(_accountsToJson());
+                    print('json --> $jsonStr');
+                    fileServ
+                        .writeKeyWithData('kgmsSettings', jsonStr)
+                        .then((result) {
+                      //print('writeKeyWithData = key kgmsSettings --> $result');
+                      if (result) dataStoreServ.resetFeeStructureFromCache();
+                    });
+                    clearKeyBoard(context);
+                    Navigator.of(context).pop();
+                  } else {
+                    print('validate not success');
+                  }
                 },
                 child: const Text('Save',
                     style: TextStyle(
@@ -693,6 +941,7 @@ class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
               ),
               ElevatedButton(
                 onPressed: () {
+                  clearKeyBoard(context);
                   Navigator.of(context).pop();
                 },
                 child: const Text('Close',
@@ -723,5 +972,43 @@ class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
       //actionsOverflowButtonSpacing: 20.0,
       backgroundColor: Colors.indigo.shade50,
     );
+  }
+}
+
+class LifeCycleManager extends StatefulWidget {
+  final Widget child;
+  const LifeCycleManager({Key key, @required this.child}) : super(key: key);
+
+  @override
+  _LifeCycleManagerState createState() => _LifeCycleManagerState();
+}
+
+class _LifeCycleManagerState extends State<LifeCycleManager>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    firestoreServ.disposeService();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      print('state paused = $state');
+    } else if (state == AppLifecycleState.resumed) {
+      print('state resumed = $state');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
