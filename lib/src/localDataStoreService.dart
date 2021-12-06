@@ -33,11 +33,11 @@ class LocalDataStoreServ {
             'admissionFee': admFee,
             'tuitionFee': tuiFee,
           };
-          print('kgms feeStruct data from file io ');
+          //print('kgms feeStruct data from file io ');
           return _feeStruct;
         }
       } on FormatException catch (e) {
-        print('_getFeeStructureFromFile data = $dataStr and error = $e');
+        //print('_getFeeStructureFromFile data = $dataStr and error = $e');
       }
     }
     return null;
@@ -60,9 +60,8 @@ class LocalDataStoreServ {
         studentId: admissionDataMap,
       };
       final String _newAdmissionStr = convert.jsonEncode(admissionMap);
-      fileServ.writeKeyWithData('kgmsAdmissions', _newAdmissionStr).then(
-          (result) =>
-              print('writeKeyWithData = key kgmsNewAdmission --> $result'));
+      fileServ.writeKeyWithData('kgmsAdmissions', _newAdmissionStr);
+      //.then((result) =>print('writeKeyWithData = key kgmsNewAdmission --> $result'));
     } else {
       try {
         final _jsonMapObj = convert.jsonDecode(dataStr);
@@ -73,14 +72,13 @@ class LocalDataStoreServ {
         };
         _jsonMapObj[studentId] = admissionDataMap;
         final String _newAdmissionStr = convert.jsonEncode(_jsonMapObj);
-        fileServ.writeKeyWithData('kgmsAdmissions', _newAdmissionStr).then(
-            (result) => print(
-                'writeKeyWithData = key kgmsNewAdmission append --> $result'));
+        fileServ.writeKeyWithData('kgmsAdmissions', _newAdmissionStr);
+        //.then((result) => print('writeKeyWithData = key kgmsNewAdmission append --> $result'));
       } on FormatException catch (e) {
-        print('insertNewAdmissionLocal data = $dataStr and error = $e');
+        //print('insertNewAdmissionLocal data = $dataStr and error = $e');
         result = 'json decode error';
       } catch (e) {
-        print('insertNewAdmissionLocal error = $e');
+        //print('insertNewAdmissionLocal error = $e');
         result = 'other error';
       }
     }
@@ -94,7 +92,7 @@ class LocalDataStoreServ {
         final _jsonMapObj = convert.jsonDecode(dataStr);
         if (_jsonMapObj.containsKey(id)) return _jsonMapObj[id];
       } on FormatException catch (e) {
-        print('getPendingStudentById data = $dataStr and error = $e');
+        //print('getPendingStudentById data = $dataStr and error = $e');
       }
     }
     return null;
@@ -110,7 +108,7 @@ class LocalDataStoreServ {
           idInt += 3;
         return idPart['strPart'] + idInt.toString();
       } on FormatException catch (e) {
-        print('getAvailableStdId data = $dataStr and error = $e');
+        //print('getAvailableStdId data = $dataStr and error = $e');
         return 'error';
       }
     } else {
@@ -125,12 +123,11 @@ class LocalDataStoreServ {
         final _jsonMapObj = convert.jsonDecode(dataStr);
         _jsonMapObj.remove(id);
         final String _delAdmissionStr = convert.jsonEncode(_jsonMapObj);
-        fileServ.writeKeyWithData('kgmsAdmissions', _delAdmissionStr).then(
-            (result) => print(
-                'writeKeyWithData = key deleteAllPendingAdmissions --> $result'));
+        fileServ.writeKeyWithData('kgmsAdmissions', _delAdmissionStr);
+        //.then((result) => print('writeKeyWithData = key deleteAllPendingAdmissions --> $result'));
         return true;
       } on FormatException catch (e) {
-        print('deleteAllPendingAdmissions data = $dataStr and error = $e');
+        //print('deleteAllPendingAdmissions data = $dataStr and error = $e');
       }
     }
     return false;
@@ -143,11 +140,10 @@ class LocalDataStoreServ {
         final _jsonMapObj = convert.jsonDecode(dataStr);
         for (var i = 0; i < ids.length; i++) _jsonMapObj.remove(ids[i]);
         final String _delAdmissionStr = convert.jsonEncode(_jsonMapObj);
-        fileServ.writeKeyWithData('kgmsAdmissions', _delAdmissionStr).then(
-            (result) => print(
-                'writeKeyWithData = key deleteBulkPendingAdmission --> $result'));
+        fileServ.writeKeyWithData('kgmsAdmissions', _delAdmissionStr);
+        //.then((result) => print('writeKeyWithData = key deleteBulkPendingAdmission --> $result'));
       } on FormatException catch (e) {
-        print('deleteBulkPendingAdmission data = $dataStr and error = $e');
+        //print('deleteBulkPendingAdmission data = $dataStr and error = $e');
       }
     }
   }
@@ -174,7 +170,7 @@ class LocalDataStoreServ {
         }
         return pendingList;
       } on FormatException catch (e) {
-        print('getPendingAdmissions data = $dataStr and error = $e');
+        //print('getPendingAdmissions data = $dataStr and error = $e');
       }
     }
     return null;
@@ -196,7 +192,7 @@ class LocalDataStoreServ {
         }
         return pendingList;
       } on FormatException catch (e) {
-        print('getPendingAdmissions data = $dataStr and error = $e');
+        //print('getPendingAdmissions data = $dataStr and error = $e');
       }
     }
     return null;
@@ -340,9 +336,9 @@ class LocalDataStoreServ {
 
   Future<bool> uploadAdmissionToCloud(String studentId) async {
     //print('deta api key ---> ${env['deta_api_key']}');
-    print('stdId --> $studentId');
+    //print('stdId --> $studentId');
     String userAgent = await bUtil.getHttpUserAgentFromCache;
-    //print('user agent --> $userAgent');
+    ////print('user agent --> $userAgent');
     var pendingStudent = await getPendingStudentById(studentId);
     //print('pendingStudent --> ${pendingStudent}');
     var bodyStr = await getAdmissionToJsonStr(
@@ -350,7 +346,7 @@ class LocalDataStoreServ {
         parentData: pendingStudent['parentData'],
         accountData: pendingStudent['accountData'],
         studentId: studentId);
-    print('bodyStr --> $bodyStr');
+    //print('bodyStr --> $bodyStr');
     var headers = await _getHeader();
     final postReqStrUrl = kgmsMainApiUrl + '/insertStudent';
     var response =
@@ -358,9 +354,9 @@ class LocalDataStoreServ {
     if (response.statusCode == 201)
       return true;
     else {
-      print('response code ---> ${response.statusCode}');
-      print('response headers ---> ${response.headers}');
-      print('response body ---> ${response.body}');
+      //print('response code ---> ${response.statusCode}');
+      //print('response headers ---> ${response.headers}');
+      //print('response body ---> ${response.body}');
       return false;
     }
   }
@@ -386,19 +382,19 @@ class LocalDataStoreServ {
           parentData: item['data']['parentData'],
           accountData: item['data']['accountData'],
           studentId: stdId);
-      print('bodyStr --> $bodyStr');
+      //print('bodyStr --> $bodyStr');
       var response =
           await http.post(postReqStrUrl, headers: headers, body: bodyStr);
       if (response.statusCode == 201)
         _uploadCompletedStd.add(stdId);
       else {
         _isErrFound = true;
-        print('response code ---> ${response.statusCode}');
-        print('response headers ---> ${response.headers}');
-        print('response body ---> ${response.body}');
+        //print('response code ---> ${response.statusCode}');
+        //print('response headers ---> ${response.headers}');
+        //print('response body ---> ${response.body}');
       }
     }).toList());
-    print('_uploadCompletedStd --> $_uploadCompletedStd');
+    //print('_uploadCompletedStd --> $_uploadCompletedStd');
     await _deleteBulkPendingAdmission(_uploadCompletedStd);
     return !_isErrFound;
   }
@@ -448,9 +444,9 @@ class LocalDataStoreServ {
     if (response.statusCode == 201)
       return true;
     else {
-      print('response code ---> ${response.statusCode}');
-      print('response headers ---> ${response.headers}');
-      print('response body ---> ${response.body}');
+      //print('response code ---> ${response.statusCode}');
+      //print('response headers ---> ${response.headers}');
+      //print('response body ---> ${response.body}');
       return false;
     }
     //return response.body;
@@ -472,9 +468,9 @@ class LocalDataStoreServ {
     if (response.statusCode == 200)
       return true;
     else {
-      print('response code ---> ${response.statusCode}');
-      print('response headers ---> ${response.headers}');
-      print('response body ---> ${response.body}');
+      //print('response code ---> ${response.statusCode}');
+      //print('response headers ---> ${response.headers}');
+      //print('response body ---> ${response.body}');
       return false;
     }
   }
@@ -487,9 +483,9 @@ class LocalDataStoreServ {
     if (response.statusCode == 200)
       return true;
     else {
-      print('response code ---> ${response.statusCode}');
-      print('response headers ---> ${response.headers}');
-      print('response body ---> ${response.body}');
+      //print('response code ---> ${response.statusCode}');
+      //print('response headers ---> ${response.headers}');
+      //print('response body ---> ${response.body}');
       return false;
     }
   }
@@ -571,9 +567,9 @@ class LocalDataStoreServ {
     if (response.statusCode == 200)
       return true;
     else {
-      print('response code ---> ${response.statusCode}');
-      print('response headers ---> ${response.headers}');
-      print('response body ---> ${response.body}');
+      //print('response code ---> ${response.statusCode}');
+      //print('response headers ---> ${response.headers}');
+      //print('response body ---> ${response.body}');
       return false;
     }
   }

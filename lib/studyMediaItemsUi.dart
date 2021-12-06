@@ -42,7 +42,7 @@ class StudyMediaAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: const Icon(Icons.add, size: 30),
             tooltip: 'add new media',
             onPressed: () async {
-              // print('add new media');
+              // //print('add new media');
               bool _internet = await isInternetAvailable();
               if (_internet) {
                 animatedCustomNonDismissibleAlert(
@@ -113,18 +113,18 @@ class MediaItemsModel with ChangeNotifier {
           await _platform.invokeMethod('getMediaStorage', subDir);
       var jsonArr = jsonDecode(result);
       List<String> outputList = jsonArr != null ? List.from(jsonArr) : null;
-      //print('result = $outputList');
+      ////print('result = $outputList');
       if (outputList != null) {
         outputList.forEach((item) => _mediaItems.add(item));
       }
       _isError = false;
       _errorMsg = '';
     } on PlatformException catch (e) {
-      print('error in storage channel = ${e.message}');
+      ////print('error in storage channel = ${e.message}');
       _isError = true;
       _errorMsg = 'platform exception';
     } on FormatException catch (e) {
-      print('error in json parse = ${e.message}');
+      //print('error in json parse = ${e.message}');
       _isError = true;
       _errorMsg = 'json exception';
     }
@@ -209,7 +209,7 @@ class StudyMediaBody extends StatelessWidget {
             icon: const Icon(Icons.done),
             iconSize: 27,
             onPressed: () async {
-              //print('del image');
+              ////print('del image');
               final KCircularProgress cp = KCircularProgress(ctx: context);
               cp.showCircularProgress();
               try {
@@ -231,7 +231,7 @@ class StudyMediaBody extends StatelessWidget {
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // //print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -286,13 +286,13 @@ class StudyMediaBody extends StatelessWidget {
               icon: const Icon(Icons.delete_forever),
               tooltip: 'delete forever',
               onPressed: () async {
-                //print('delete item');
+                ////print('delete item');
                 animatedCustomNonDismissibleAlert(
                     context, _deleteAlertW(context, classId, fileName));
               },
             ),
             onTap: () async {
-              //print('media item on tap');
+              ////print('media item on tap');
               bool _internet = await isInternetAvailable();
               if (_internet) {
                 if (fileType == "image") {
@@ -524,7 +524,7 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
                   _uploadIssue = "** file name cannot have spaces";
                 });
               } else {
-                // print('go for upload');
+                // //print('go for upload');
                 setState(() {
                   _uploadIssue = "";
                 });
@@ -577,11 +577,11 @@ class _MediaFilePickerFormState extends State<MediaFilePickerForm> {
                         }
                       },
                       onError: (err) {
-                        print('Error during upload --> $err');
+                        //print('Error during upload --> $err');
                       },
                       cancelOnError: false,
                       onDone: () {
-                        print('upload stream done !');
+                        //print('upload stream done !');
                       },
                     );
                   } else {
@@ -813,7 +813,7 @@ class ImageDialog extends StatelessWidget {
 //                  iconSize: 30.0,
 //                  color: Colors.white,
 //                  onPressed: () {
-//                    print('close image dialog !');
+//                    //print('close image dialog !');
 //                    Navigator.of(context).pop();
 //                  },
 //                ),
@@ -963,7 +963,7 @@ class ImageDialog extends StatelessWidget {
 //                    if (snapshot.state == TaskState.success) {
 //                      widget.onSuccessfulUpload(fullFileName);
 //                      cp.closeProgress();
-//                      //print('upload successful !');
+//                      ////print('upload successful !');
 //                      Navigator.of(context).pop();
 //                    } else {
 //                      cp.closeProgress();

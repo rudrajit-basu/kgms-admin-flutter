@@ -153,7 +153,7 @@ class LoginModel with ChangeNotifier implements ReassembleHandler {
 
   LoginModel() {
     fServ.getCurrentUser().then((uid) {
-      print('uid from getCurrentUser --> $uid');
+      //print('uid from getCurrentUser --> $uid');
       if (uid != null) {
         _userId = uid;
         _isSignedIn = true;
@@ -174,7 +174,7 @@ class LoginModel with ChangeNotifier implements ReassembleHandler {
   }
 
   void logIn(String uName) {
-    print('user logged in --> $uName !');
+    ////print('user logged in --> $uName !');
     _userId = uName;
     _isSignedIn = true;
     firestoreServ.startKgmsClassesSubscription();
@@ -182,7 +182,7 @@ class LoginModel with ChangeNotifier implements ReassembleHandler {
   }
 
   void logOut() {
-    print('user logged out --> $_userId !');
+    //print('user logged out --> $_userId !');
     cacheServ.getUserName().then((uName) {
       _userName = uName;
       _isSignedIn = false;
@@ -193,7 +193,7 @@ class LoginModel with ChangeNotifier implements ReassembleHandler {
 
   @override
   void reassemble() {
-    print('Did hot-reload from LoginModel !');
+    //print('Did hot-reload from LoginModel !');
   }
 }
 
@@ -282,7 +282,7 @@ class _KgmsLoginState extends State<KgmsLogin> {
   void dispose() {
     _uidCtrl.dispose();
     _passwdCtrl.dispose();
-    // print("login disposed.....");
+    // //print("login disposed.....");
     super.dispose();
   }
 
@@ -414,7 +414,7 @@ class _KgmsLoginState extends State<KgmsLogin> {
                             //  prefs.setString('kUserName', _uidCtrl.text);
                             //});
                             cacheServ.setUserName(_uidCtrl.text).then((res) {
-                              print('Set user name result --> $res');
+                              //print('Set user name result --> $res');
                             });
                             String _userEmail = await fServ.getCurrentUser();
                             cp.closeProgress();
@@ -606,9 +606,9 @@ class KgmsMain extends StatelessWidget {
             //     onTap: () async {
             //       String _uid = await fServ.getCurrentUser();
             //       if (_uid != null) {
-            //         print("uid = ${_uid}");
+            //         //print("uid = ${_uid}");
             //       } else {
-            //         print("uid = null");
+            //         //print("uid = null");
             //       }
             //     }),
             SizedBox(
@@ -621,7 +621,7 @@ class KgmsMain extends StatelessWidget {
                     style: TextStyle(fontSize: 16, letterSpacing: 0.4)),
                 enabled: true,
                 onTap: () async {
-                  //print('app settings');
+                  ////print('app settings');
                   //Navigator.pop(context);
                   animatedCustomNonDismissibleAlert(
                       context, _KgmsSettingsDialog());
@@ -635,7 +635,7 @@ class KgmsMain extends StatelessWidget {
                     style: TextStyle(fontSize: 16, letterSpacing: 0.4)),
                 enabled: true,
                 onTap: () async {
-                  print('Restore Student !');
+                  //print('Restore Student !');
                   bool _internet = await isInternetAvailable();
                   if (_internet) {
                     Navigator.pop(context);
@@ -658,12 +658,12 @@ class KgmsMain extends StatelessWidget {
                   if (_internet) {
                     bool _isSignOut = await fServ.signOut();
                     if (_isSignOut) {
-                      // print("Sign Out successful");
+                      // //print("Sign Out successful");
                       //Navigator.pop(context);
                       Navigator.pop(context);
                       Provider.of<LoginModel>(context, listen: false).logOut();
                     } else {
-                      // print("Sign Out Not successful");
+                      // //print("Sign Out Not successful");
                       kAlert(context, wrongSignOut);
                     }
                   } else {
@@ -733,7 +733,7 @@ class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
                   _admissionFeeCtrl.text = _jsonObj['admissionFee'];
                   _tuitionFeeCtrl.text = _jsonObj['tuitionFee'];
                 } on FormatException catch (e) {
-                  print('getKgmsSettings data = $data and error = $e');
+                  //print('getKgmsSettings data = $data and error = $e');
                 }
               }
             }));
@@ -906,20 +906,20 @@ class _KgmsSettingsDialogState extends State<_KgmsSettingsDialog> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState.validate()) {
-                    print('validate success');
+                    //print('validate success');
                     //Navigator.of(context).pop();
                     final jsonStr = convert.jsonEncode(_accountsToJson());
-                    print('json --> $jsonStr');
+                    //print('json --> $jsonStr');
                     fileServ
                         .writeKeyWithData('kgmsSettings', jsonStr)
                         .then((result) {
-                      //print('writeKeyWithData = key kgmsSettings --> $result');
+                      ////print('writeKeyWithData = key kgmsSettings --> $result');
                       if (result) dataStoreServ.resetFeeStructureFromCache();
                     });
                     clearKeyBoard(context);
                     Navigator.of(context).pop();
                   } else {
-                    print('validate not success');
+                    //print('validate not success');
                   }
                 },
                 child: const Text('Save',
@@ -1001,9 +1001,9 @@ class _LifeCycleManagerState extends State<LifeCycleManager>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      print('state paused = $state');
+      //print('state paused = $state');
     } else if (state == AppLifecycleState.resumed) {
-      print('state resumed = $state');
+      //print('state resumed = $state');
     }
   }
 

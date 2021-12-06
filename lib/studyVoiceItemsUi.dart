@@ -148,11 +148,11 @@ class VoiceItemsModel with ChangeNotifier implements ReassembleHandler {
       _isError = false;
       _errorMsg = '';
     } on PlatformException catch (e) {
-      print('error in storage channel = ${e.message}');
+      //print('error in storage channel = ${e.message}');
       _isError = true;
       _errorMsg = 'platform exception';
     } on FormatException catch (e) {
-      print('error in json parse = ${e.message}');
+      //print('error in json parse = ${e.message}');
       _isError = true;
       _errorMsg = 'json exception';
     }
@@ -406,7 +406,7 @@ class StudyVoiceBody extends StatelessWidget {
                     child: const Text('|> Play'),
                     onPressed: () async {
                       if (fileType == 'voice') {
-                        print('play voice file --> $fileName');
+                        //print('play voice file --> $fileName');
                         bool _internet = await isInternetAvailable();
                         if (_internet) {
                           final KCircularProgress cp =
@@ -460,7 +460,7 @@ class StudyVoiceBody extends StatelessWidget {
                     child: const Text('X Remove'),
                     onPressed: () {
                       if (fileType == 'voice') {
-                        print('remove voice file --> $fileName');
+                        //print('remove voice file --> $fileName');
                         animatedCustomNonDismissibleAlert(
                             context, _deleteAlertW(context, classId, fileName));
                       }
@@ -554,7 +554,7 @@ class _VoicePlayerState extends State<_VoicePlayer> {
   void initState() {
     super.initState();
     _myPlayer.openAudioSession().then((value) {
-      print('_myPlayer value --> $value');
+      //print('_myPlayer value --> $value');
       setState(() {
         _canPlay = true;
       });
@@ -585,7 +585,7 @@ class _VoicePlayerState extends State<_VoicePlayer> {
       } else {
         timer.cancel();
         timer = null;
-        print('timer completed !');
+        //print('timer completed !');
       }
     }
 
@@ -626,13 +626,13 @@ class _VoicePlayerState extends State<_VoicePlayer> {
             });
           }
         }
-        print('stop track --> ${widget.trackUrl}');
+        //print('stop track --> ${widget.trackUrl}');
       } else {
-        print('play track --> ${widget.trackUrl}');
+        //print('play track --> ${widget.trackUrl}');
         Duration d = await _myPlayer.startPlayer(
           fromURI: widget.trackUrl,
           whenFinished: () {
-            print('player finished playing !');
+            //print('player finished playing !');
             setState(() {
               _isPlay = false;
               _playPosition = Duration(milliseconds: 0);
@@ -668,7 +668,7 @@ class _VoicePlayerState extends State<_VoicePlayer> {
   ElevatedButton _togglePlayButton(bool isPlay) => ElevatedButton(
         onPressed: () async {
           if (!isPlay && _canPlay && _errorMsg.isEmpty) {
-            print('Play track !');
+            //print('Play track !');
             setState(() {
               _msg = 'Loading...';
             });
@@ -679,7 +679,7 @@ class _VoicePlayerState extends State<_VoicePlayer> {
             //});
           } else {
             if (_canPlay && _errorMsg.isEmpty) {
-              print('Stop play track !');
+              //print('Stop play track !');
               _startStopPlayNew(isPlay);
             }
             //_startStopPlay(isPlay);
@@ -912,17 +912,17 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
         });
       }
     } on PlatformException catch (e) {
-      print('error in getExtCacheDir channel = ${e.message}');
+      //print('error in getExtCacheDir channel = ${e.message}');
     }
   }
 
   Future<void> _initRecordSetup() async {
     try {
       final bool result = await _platform.invokeMethod('isPermissionToRecord');
-      print('_initRecordSetup result --> $result');
+      //print('_initRecordSetup result --> $result');
       if (result) {
         _myRecorder.openAudioSession().then((value) async {
-          print('_myRecorder value --> $value');
+          //print('_myRecorder value --> $value');
           await _localPath();
           setState(() {
             //subscription = _recorderStatusStream(_myRecorder).listen((value) {
@@ -933,7 +933,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
           });
         });
         _myPlayer.openAudioSession().then((value) {
-          print('_myPlayer value --> $value');
+          //print('_myPlayer value --> $value');
           setState(() {
             _canPlay = true;
             //_myPlayer.setPlayerCallback();
@@ -945,7 +945,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
         });
       }
     } on PlatformException catch (e) {
-      print('error in isPermissionToRecord channel = ${e.message}');
+      //print('error in isPermissionToRecord channel = ${e.message}');
     }
   }
 
@@ -958,7 +958,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
       //_fileName = fName;
       _file = _filePath + '/$_fileName';
     });
-    print('file with path --> $_file');
+    //print('file with path --> $_file');
     try {
       await _myRecorder.startRecorder(
         toFile: _file,
@@ -976,7 +976,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
         });
       }
     } catch (e) {
-      print('error _startRecordNew --> $e');
+      //print('error _startRecordNew --> $e');
       setState(() {
         _errorMsg = 'Error in start record';
       });
@@ -1002,7 +1002,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
         });
       }
     } catch (e) {
-      print('error _stopRecordNew --> $e');
+      //print('error _stopRecordNew --> $e');
       setState(() {
         _errorMsg = 'Error in stop record';
       });
@@ -1023,7 +1023,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
       } else {
         timer.cancel();
         timer = null;
-        print('timer completed !');
+        //print('timer completed !');
       }
     }
 
@@ -1070,7 +1070,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
             codec: Codec.aacMP4,
             whenFinished: () {
               setState(() {
-                print('player finished playing !');
+                //print('player finished playing !');
                 _isPlay = false;
                 _playPosition = Duration(milliseconds: 0);
                 if (_playerSubscription != null) {
@@ -1080,7 +1080,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
               });
             });
         if (_myPlayer.isPlaying) {
-          print('tot dur --> $_recordDuration');
+          //print('tot dur --> $_recordDuration');
           //print('play dur --> $_playDuration');
           setState(() {
             _playerSubscription =
@@ -1159,7 +1159,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
   ElevatedButton _togglePlayButton(bool isPlay) => ElevatedButton(
         onPressed: () {
           if (!isPlay && _canPlay && _errorMsg.isEmpty) {
-            print('Play recording !');
+            //print('Play recording !');
             _startStopPlayNew(isPlay);
             //_startStopPlay(isPlay);
             //setState(() {
@@ -1167,7 +1167,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
             //});
           } else {
             if (_canPlay && _errorMsg.isEmpty) {
-              print('Stop play recording !');
+              //print('Stop play recording !');
               _startStopPlayNew(isPlay);
             }
             //_startStopPlay(isPlay);
@@ -1193,10 +1193,10 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
   ElevatedButton _toggleRecordButton(bool isRecord) => ElevatedButton(
         onPressed: () {
           if (!isRecord) {
-            //print('start recording !');
+            ////print('start recording !');
             if (_canRecord && _errorMsg.isEmpty) {
-              print('can record !');
-              print('starting recording !');
+              //print('can record !');
+              //print('starting recording !');
               _startRecordNew();
               //_startRecord();
               //setState(() {
@@ -1204,9 +1204,9 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
               //});
             }
           } else {
-            print('stop recording !');
+            //print('stop recording !');
             if (_canRecord && _isRecord && _errorMsg.isEmpty) {
-              print('stoping recording !');
+              //print('stoping recording !');
               _stopRecordNew();
               //_stopRecord();
             }
@@ -1361,7 +1361,7 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
           children: <Widget>[
             ElevatedButton(
               onPressed: () {
-                print('again recording !');
+                //print('again recording !');
                 _resetRecord();
               },
               child: const Text('< Retake',
@@ -1457,11 +1457,11 @@ class _VoiceRecorderPlayerState extends State<_VoiceRecorderPlayer> {
                             }
                           },
                           onError: (err) {
-                            print('Error during upload --> $err');
+                            //print('Error during upload --> $err');
                           },
                           cancelOnError: false,
                           onDone: () {
-                            print('upload stream done !');
+                            //print('upload stream done !');
                           },
                         );
                       } else {
@@ -1632,11 +1632,11 @@ class _VoiceFilesFromCache extends StatelessWidget {
           _file.deleteSync();
           return 'ok';
         } catch (e) {
-          print('Remove Audio err --> $e');
+          //print('Remove Audio err --> $e');
           return "Couldn't delete file !";
         }
       } else {
-        print('Remove Audio err --> file not exists !');
+        //print('Remove Audio err --> file not exists !');
         return "File doesn't exists";
       }
     }
@@ -1655,7 +1655,7 @@ class _VoiceFilesFromCache extends StatelessWidget {
           try {
             _file.deleteSync();
           } catch (e) {
-            print('Remove all Audio err --> $e');
+            //print('Remove all Audio err --> $e');
             _isOk = false;
           }
         } else {
@@ -1693,7 +1693,7 @@ class _VoiceFilesFromCache extends StatelessWidget {
             final KCircularProgress cp = KCircularProgress(ctx: context);
             cp.showCircularProgress();
             var res = fn();
-            print('res --> $res');
+            //print('res --> $res');
             if (res == 'ok') {
               cp.closeProgress();
               Navigator.pop(context);
@@ -1809,9 +1809,9 @@ class _VoiceFilesFromCache extends StatelessWidget {
                       //print('kDAlert _VoiceRecorderPlayer --> $result');
 
                       if (result != null && !result) {
-                        print('no refreshing data required..!');
+                        //print('no refreshing data required..!');
                       } else {
-                        print('refreshing data..!');
+                        //print('refreshing data..!');
                         Provider.of<CacheFileItemModel>(context, listen: false)
                             .reloadData();
                       }
@@ -2071,7 +2071,7 @@ class CacheFileItemModel with ChangeNotifier implements ReassembleHandler {
         return result;
       }
     } on PlatformException catch (e) {
-      print('error in getExtCacheDir channel = ${e.message}');
+      //print('error in getExtCacheDir channel = ${e.message}');
     }
     return null;
   }
@@ -2093,13 +2093,13 @@ class CacheFileItemModel with ChangeNotifier implements ReassembleHandler {
         _isWaiting = false;
         notifyListeners();
       } else {
-        print('no exists local path --> $path');
+        //print('no exists local path --> $path');
         _isError = true;
         _errorMsg = 'local cache path does not exists !';
         notifyListeners();
       }
     } else {
-      print('null local path');
+      //print('null local path');
       _isError = true;
       _errorMsg = 'local cache path is null !';
       notifyListeners();
@@ -2117,6 +2117,6 @@ class CacheFileItemModel with ChangeNotifier implements ReassembleHandler {
 
   @override
   void reassemble() {
-    print('Did hot-reload from CacheFileItemModel !');
+    //print('Did hot-reload from CacheFileItemModel !');
   }
 }

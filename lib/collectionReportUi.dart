@@ -43,8 +43,8 @@ class KgmsCollectionReportState extends State<KgmsCollectionReport> {
 
   Future<void> _onSelect(Map value, Map mapValue) async {
     var valueStr = convert.jsonEncode(value);
-    print('selected options --> $valueStr');
-    print('show options --> $mapValue');
+    //print('selected options --> $valueStr');
+    //print('show options --> $mapValue');
     setState(() {
       isReportLoaded = false;
       showOptions = mapValue;
@@ -83,10 +83,10 @@ class KgmsCollectionReportState extends State<KgmsCollectionReport> {
         }
       }
     } on FormatException catch (e) {
-      print('getStudentCollectionReport err --> $e');
-      print('getStudentCollectionReport --> $resp');
+      //print('getStudentCollectionReport err --> $e');
+      //print('getStudentCollectionReport --> $resp');
     }
-    //print('respData --> $respData');
+    ////print('respData --> $respData');
     if (mounted)
       setState(() {
         isReportLoaded = true;
@@ -122,7 +122,7 @@ class KgmsCollectionReportState extends State<KgmsCollectionReport> {
             icon: const Icon(Icons.done),
             iconSize: 27,
             onPressed: () async {
-              //print('show student list !');
+              ////print('show student list !');
               //bool _internet = await isInternetAvailable();
               //if (_internet) {
               //  final KCircularProgress cp = KCircularProgress(ctx: context);
@@ -148,7 +148,7 @@ class KgmsCollectionReportState extends State<KgmsCollectionReport> {
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // //print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -173,7 +173,7 @@ class KgmsCollectionReportState extends State<KgmsCollectionReport> {
   //    'sessionYear': _lastReqValue['sessionYear'],
   //    'session': _lastReqValue['session'],
   //  };
-  //  print('reportQueryData --> $reportQueryData');
+  //  //print('reportQueryData --> $reportQueryData');
   //  if (studentCount > 0) {
   //    animatedCustomNonDismissibleAlert(
   //        this,
@@ -217,7 +217,7 @@ class KgmsCollectionReportState extends State<KgmsCollectionReport> {
                 'session': _lastReqValue['session'],
               };
               //var reportQueryDataStr = convert.jsonEncode(reportQueryData);
-              //print('reportQueryData --> $reportQueryData');
+              ////print('reportQueryData --> $reportQueryData');
               animatedCustomNonDismissibleAlert(
                   context,
                   _showCollectionInfoAlertW(
@@ -298,7 +298,7 @@ class KgmsCollectionReportAppBar extends StatelessWidget
         iconSize: 24,
         tooltip: 'back',
         onPressed: () {
-          //print('back');
+          ////print('back');
           Navigator.pop(context);
         },
       ),
@@ -325,7 +325,7 @@ class KgmsCollectionReportAppBar extends StatelessWidget
             iconSize: 30,
             tooltip: 'more options',
             onPressed: () async {
-              //print('show drawer');
+              ////print('show drawer');
               //Scaffold.of(context).openEndDrawer();
               animatedCustomNonDismissibleAlert(
                   context, _CollectionReportOptions(onSelect: onSelect));
@@ -480,7 +480,7 @@ class _CollectionReportOptionsState extends State<_CollectionReportOptions> {
                           width: MediaQuery.of(context).size.width * 0.36,
                           child: ElevatedButton.icon(
                             onPressed: () async {
-                              //print('get date !');
+                              ////print('get date !');
                               clearKeyBoard(context);
                               if (_feeTypeCtrl == null) {
                                 kAlert(context,
@@ -494,7 +494,7 @@ class _CollectionReportOptionsState extends State<_CollectionReportOptions> {
                                             'admissionFee',
                                         //showMonths: true,
                                         onSelect: (String value) {
-                                          //print('result from ui --> $value');
+                                          ////print('result from ui --> $value');
                                           setState(() {
                                             collection_session = value;
                                           });
@@ -582,7 +582,7 @@ class _CollectionReportOptionsState extends State<_CollectionReportOptions> {
             children: <Widget>[
               ElevatedButton(
                 onPressed: () {
-                  //print('save collection');
+                  ////print('save collection');
                   if (_isValidated()) {
                     var session = null;
                     var sessionYear = null;
@@ -687,7 +687,7 @@ class KgmsCollectionReportBody extends StatelessWidget {
         splashColor: color,
         borderRadius: BorderRadius.circular(12.0),
         onTap: () {
-          //print('open dialog for title --> $title');
+          ////print('open dialog for title --> $title');
           onClickReportTile(className, studentCount);
         },
         child: Container(
@@ -899,7 +899,7 @@ class _KStudentCollectionModel
     _isNotDisposed1 = true;
     _query = query;
     _studentCount = studentCount;
-    //print('_query --> $_query');
+    ////print('_query --> $_query');
     _fetchStudentCollectionInfo();
   }
 
@@ -965,12 +965,12 @@ class _KStudentCollectionModel
       'sessionYear': _query['sessionYear'],
       'session': _query['session'],
       'last': token == null ? '' : token,
-      'limit': 3
+      'limit': 10
     };
     var queryStr = convert.jsonEncode(queryMap);
-    print('query str --> $queryStr');
+    ////print('query str --> $queryStr');
     dataStoreServ.getStudentCollectionInfo(queryStr).then((result) {
-      print('result --> $result');
+      //print('result --> $result');
       if (_isNotDisposed1) {
         try {
           var _jsonObj = convert.jsonDecode(result);
@@ -988,7 +988,7 @@ class _KStudentCollectionModel
               if (_tokenList.length > _currentTokenPos) {
                 _nextPageToken = _tokenList[_currentTokenPos];
                 _previousPageToken = null;
-                print('(default) current pos --> $_currentTokenPos');
+                //print('(default) current pos --> $_currentTokenPos');
               }
               _totalCount = _jsonObj['totalCount'] as int;
             }
@@ -1003,8 +1003,8 @@ class _KStudentCollectionModel
                 _previousPageToken = '';
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
-              print('(next) current pos --> $_currentTokenPos');
-              print('student acc list --> $_tokenList');
+              //print('(next) current pos --> $_currentTokenPos');
+              //print('student acc list --> $_tokenList');
             }
             if (isPrev) {
               _currentTokenPos--;
@@ -1015,13 +1015,13 @@ class _KStudentCollectionModel
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
               _nextPageToken = _tokenList[_currentTokenPos];
-              print('(prev) current pos --> $_currentTokenPos');
-              print('student acc list --> $_tokenList');
+              //print('(prev) current pos --> $_currentTokenPos');
+              //print('student acc list --> $_tokenList');
               _widgetIndex -= _studentListColleItem.length;
             }
           }
         } on FormatException catch (e) {
-          print('getStudentAccountInfo data = $result and error = $e');
+          //print('getStudentAccountInfo data = $result and error = $e');
           _errorMsg = '$result';
           _isError = true;
         }
@@ -1042,13 +1042,13 @@ class _KStudentCollectionModel
 
   @override
   void reassemble() {
-    print('Did hot-reload from _KStudentCollectionModel !');
+    //print('Did hot-reload from _KStudentCollectionModel !');
   }
 
   @override
   void dispose() {
     _isNotDisposed1 = false;
-    print('disposing _KStudentCollectionModel !');
+    //print('disposing _KStudentCollectionModel !');
   }
 }
 
@@ -1171,7 +1171,7 @@ class _StudentCollectionList extends StatelessWidget {
                           separatorBuilder: (context, index) => const Divider(
                                 height: 4.2,
                               ),
-                          //cacheExtent: itemLen * 100.0,
+                          cacheExtent: itemLen * 500.0,
                           itemBuilder: (context, index) =>
                               _studentListCollectionWidget(
                                   snapshot.studentListColleItem[index],

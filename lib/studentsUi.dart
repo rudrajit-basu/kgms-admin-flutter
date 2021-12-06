@@ -57,7 +57,7 @@ class KgmsStudentsAppBar extends StatelessWidget
         iconSize: 24,
         tooltip: 'back',
         onPressed: () {
-          //print('back');
+          ////print('back');
           Navigator.pop(context);
         },
       ),
@@ -87,7 +87,7 @@ class KgmsStudentsAppBar extends StatelessWidget
                 : () => Provider.of<KStudentsModel>(context, listen: false)
                     .fetchPreviousStudents(),
             //() {
-            //  print('Go Previous !');
+            //  //print('Go Previous !');
             //},
           ),
         ),
@@ -110,7 +110,7 @@ class KgmsStudentsAppBar extends StatelessWidget
             iconSize: 30,
             tooltip: 'more options',
             onPressed: () {
-              //print('show drawer');
+              ////print('show drawer');
               Scaffold.of(context).openEndDrawer();
             },
           ),
@@ -295,7 +295,7 @@ class KgmsStudents extends StatelessWidget {
                   children: <Widget>[
                     ElevatedButton(
                       onPressed: () async {
-                        //print('Go and execute !');
+                        ////print('Go and execute !');
                         Navigator.of(context).pop();
                         Provider.of<KStudentsModel>(context, listen: false)
                             .executeQuery();
@@ -320,7 +320,7 @@ class KgmsStudents extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () async {
-                        //print('Reset search !');
+                        ////print('Reset search !');
                         //Navigator.of(context).pop();
                         //if (_studentNameSearchCtrl.text != null &&
                         //    _studentNameSearchCtrl.text != '')
@@ -461,10 +461,10 @@ class KStudentsModel with ChangeNotifier implements ReassembleHandler {
   }
 
   void executeQuery() {
-    //print('exec query !');
-    //print('std name --> $_stdNameValue');
-    //print('class id --> ${_classNameList[_classIndexValue]['classId']}');
-    //print('sec --> ${_sectionList[_secIndexValue]}');
+    ////print('exec query !');
+    ////print('std name --> $_stdNameValue');
+    ////print('class id --> ${_classNameList[_classIndexValue]['classId']}');
+    ////print('sec --> ${_sectionList[_secIndexValue]}');
     _isWaiting = true;
     _errorMsg = '';
     _isError = false;
@@ -521,15 +521,15 @@ class KStudentsModel with ChangeNotifier implements ReassembleHandler {
       'section': _sectionList[_secIndexValue] == 'All'
           ? ''
           : _sectionList[_secIndexValue],
-      'limit': 3,
+      'limit': 10,
       'last': token == null ? '' : token,
       'name': _stdNameValue,
       'isActive': !_isRestoreStudent,
     };
     var queryStr = convert.jsonEncode(queryMap);
-    print('query str --> $queryStr');
+    //print('query str --> $queryStr');
     dataStoreServ.getStudentList(queryStr).then((result) {
-      //print('getKgmsStudents data = $result');
+      ////print('getKgmsStudents data = $result');
       if (_isNotDisposed) {
         try {
           var _jsonObj = convert.jsonDecode(result);
@@ -547,7 +547,7 @@ class KStudentsModel with ChangeNotifier implements ReassembleHandler {
                 if (_tokenList.length > _currentTokenPos) {
                   _nextPageToken = _tokenList[_currentTokenPos];
                   _previousPageToken = null;
-                  print('(default) current pos --> $_currentTokenPos');
+                  //print('(default) current pos --> $_currentTokenPos');
                 }
                 _totalCount = _jsonObj['totalCount'] as int;
               }
@@ -562,8 +562,8 @@ class KStudentsModel with ChangeNotifier implements ReassembleHandler {
                   _previousPageToken = '';
                 else if (_currentTokenPos > 1)
                   _previousPageToken = _tokenList[_currentTokenPos - 2];
-                print('(next) current pos --> $_currentTokenPos');
-                print('student list --> $_tokenList');
+                //print('(next) current pos --> $_currentTokenPos');
+                //print('student list --> $_tokenList');
               }
               if (isPrev) {
                 _currentTokenPos--;
@@ -574,14 +574,14 @@ class KStudentsModel with ChangeNotifier implements ReassembleHandler {
                 else if (_currentTokenPos > 1)
                   _previousPageToken = _tokenList[_currentTokenPos - 2];
                 _nextPageToken = _tokenList[_currentTokenPos];
-                print('(prev) current pos --> $_currentTokenPos');
-                print('student list --> $_tokenList');
+                //print('(prev) current pos --> $_currentTokenPos');
+                //print('student list --> $_tokenList');
                 _widgetIndex -= _studentListItem.length;
               }
             }
           }
         } on FormatException catch (e) {
-          print('getKgmsStudents data = $result and error = $e');
+          //print('getKgmsStudents data = $result and error = $e');
           _errorMsg = '$result';
           _isError = true;
         }
@@ -631,14 +631,14 @@ class KStudentsModel with ChangeNotifier implements ReassembleHandler {
 
   @override
   void reassemble() {
-    print('Did hot-reload from KStudentsModel !');
+    ////print('Did hot-reload from KStudentsModel !');
   }
 
   @override
   void dispose() {
     _isNotDisposed = false;
     studentNameSearchCtrl.dispose();
-    print('disposing KStudentsModel !');
+    ////print('disposing KStudentsModel !');
   }
 }
 
@@ -759,7 +759,7 @@ class KgmsStudentsBody extends StatelessWidget {
                           separatorBuilder: (context, index) => const Divider(
                                 height: 4.2,
                               ),
-                          //cacheExtent: itemLen * 100.0,
+                          cacheExtent: itemLen * 500.0,
                           itemBuilder: (context, index) => _studentTile(context,
                               snapshot.studentListItem[index], index, widLen));
                     }
@@ -805,7 +805,7 @@ class KgmsStudentsBody extends StatelessWidget {
             icon: const Icon(Icons.done),
             iconSize: 27,
             onPressed: () async {
-              //print('delete acc key id ---> $keyId');
+              //////print('delete acc key id ---> $keyId');
               //Navigator.pop(context);
               bool _internet = await isInternetAvailable();
               if (_internet) {
@@ -813,7 +813,7 @@ class KgmsStudentsBody extends StatelessWidget {
                 cp.showCircularProgress();
                 var body = {'keyId': keyId, 'isActive': isRestoreStudent};
                 var bodyStr = convert.jsonEncode(body);
-                print('delete bodyStr --> $bodyStr');
+                ////print('delete bodyStr --> $bodyStr');
                 var res =
                     await dataStoreServ.updateStudentBasicStatusInfo(bodyStr);
                 if (res) {
@@ -836,7 +836,7 @@ class KgmsStudentsBody extends StatelessWidget {
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // ////print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -896,7 +896,7 @@ class KgmsStudentsBody extends StatelessWidget {
                     TextButton(
                       child: const Text('Details'),
                       onPressed: () async {
-                        //print('student details for id --> ${info.studentId}');
+                        //////print('student details for id --> ${info.studentId}');
                         animatedCustomNonDismissibleAlert(
                             context,
                             _KgmsStudentDetails(
@@ -906,7 +906,7 @@ class KgmsStudentsBody extends StatelessWidget {
                                 stdLoginPassword: info.password,
                                 getStudentInfo: () => info.studentInfo,
                                 onEdit: (Map data) async {
-                                  print('onEdit data --> $data');
+                                  //print('onEdit data --> $data');
                                   _kClassNavigation(context,
                                       KgmsAdmission(studentEditData: data));
                                 },
@@ -931,7 +931,7 @@ class KgmsStudentsBody extends StatelessWidget {
                       child: TextButton(
                         child: const Text('Accounts'),
                         onPressed: () {
-                          print('student accounts -->');
+                          //print('student accounts -->');
                           _kClassNavigation(
                               context,
                               KgmsAccountsWrapper(
@@ -940,7 +940,7 @@ class KgmsStudentsBody extends StatelessWidget {
                                   className: info.className,
                                   classId: info.classId,
                                   sec: info.section));
-                          //cacheServ.getClassImgUrlCache('nursery').then((res)=>print('nursery res --> $res'));
+                          //cacheServ.getClassImgUrlCache('nursery').then((res)=>//print('nursery res --> $res'));
                         },
                         style: ButtonStyle(
                           foregroundColor: MaterialStateProperty.all<Color>(
@@ -1141,11 +1141,11 @@ class _KgmsStudentDetailsState extends State<_KgmsStudentDetails> {
             padding: const EdgeInsets.only(right: 30.0),
             child: ElevatedButton(
               onPressed: () {
-                //print('edit student !');
-                //print('edit std info ---> ${widget.getStudentInfo()}');
-                //print('edit std more info ---> $_studentMoreInfo');
+                ////print('edit student !');
+                ////print('edit std info ---> ${widget.getStudentInfo()}');
+                ////print('edit std more info ---> $_studentMoreInfo');
                 Map data = {...widget.getStudentInfo(), ..._studentMoreInfo};
-                //print('data ---> $data');
+                ////print('data ---> $data');
                 Navigator.of(context).pop();
                 widget.onEdit(data);
               },

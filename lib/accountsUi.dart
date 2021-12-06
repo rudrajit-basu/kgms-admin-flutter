@@ -80,7 +80,7 @@ class _KgmsAccountsAppBar extends StatelessWidget
         iconSize: 24,
         tooltip: 'back',
         onPressed: () {
-          //print('back');
+          ////print('back');
           Navigator.pop(context);
         },
       ),
@@ -130,7 +130,7 @@ class _KgmsAccountsAppBar extends StatelessWidget
             iconSize: 30,
             tooltip: 'more options',
             onPressed: () {
-              //print('show drawer');
+              ////print('show drawer');
               Scaffold.of(context).openEndDrawer();
             },
           ),
@@ -208,7 +208,7 @@ class KgmsAccounts extends StatelessWidget {
                       width: MediaQuery.of(context).size.width * 0.28,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          print('get date !');
+                          //print('get date !');
                           DatePicker.showPicker(
                             context,
                             showTitleActions: true,
@@ -229,7 +229,7 @@ class KgmsAccounts extends StatelessWidget {
                                     fontWeight: FontWeight.w500,
                                     fontSize: 17)),
                             onConfirm: (date) async {
-                              //print('confirm $date');
+                              ////print('confirm $date');
                               //var dayStr = date.day < 10
                               //? '0${date.day.toString()}'
                               //: date.day.toString();
@@ -238,7 +238,7 @@ class KgmsAccounts extends StatelessWidget {
                                   : date.month.toString();
                               var dateStr =
                                   '${monthStr}/${date.year.toString()}';
-                              //print('date selected --> $dateStr');
+                              ////print('date selected --> $dateStr');
                               Provider.of<_KAccountsModel>(context,
                                       listen: false)
                                   .setDateStr(dateStr);
@@ -263,7 +263,7 @@ class KgmsAccounts extends StatelessWidget {
                           //            color: Colors.black87,
                           //            fontWeight: FontWeight.w500,
                           //            fontSize: 17)), onConfirm: (date) async {
-                          //  //print('confirm $date');
+                          //  ////print('confirm $date');
                           //  var dayStr = date.day < 10
                           //      ? '0${date.day.toString()}'
                           //      : date.day.toString();
@@ -272,7 +272,7 @@ class KgmsAccounts extends StatelessWidget {
                           //      : date.month.toString();
                           //  var dateStr =
                           //      '${dayStr}/${monthStr}/${date.year.toString()}';
-                          //  //print('date selected --> $dateStr');
+                          //  ////print('date selected --> $dateStr');
                           //  Provider.of<_KAccountsModel>(context, listen: false)
                           //      .setDateStr(dateStr);
                           //},
@@ -331,7 +331,7 @@ class KgmsAccounts extends StatelessWidget {
                   children: <Widget>[
                     ElevatedButton(
                       onPressed: () async {
-                        //print('Go and execute !');
+                        ////print('Go and execute !');
                         Navigator.of(context).pop();
                         Provider.of<_KAccountsModel>(context, listen: false)
                             .executeQuery();
@@ -456,7 +456,7 @@ class KgmsAccounts extends StatelessWidget {
                     iconSize: 30,
                     tooltip: 'restore transaction',
                     onPressed: () {
-                      print('restore transaction');
+                      //print('restore transaction');
                       animatedCustomNonDismissibleAlert(
                           context,
                           _AccountRestoreTransactionWrapper(
@@ -597,14 +597,14 @@ class _KAccountsModel with ChangeNotifier implements ReassembleHandler {
       'studentId': _studentId,
       'installmentId': '',
       'isActive': true,
-      'limit': 3,
+      'limit': 10,
       'last': token == null ? '' : token,
       'dtDay': _dtDay,
       'dtMonth': _dtMonth,
       'dtYear': _dtYear,
     };
     var queryStr = convert.jsonEncode(queryMap);
-    print('query str --> $queryStr');
+    //print('query str --> $queryStr');
     dataStoreServ.getStudentAccountInfo(queryStr).then((result) {
       if (_isNotDisposed) {
         try {
@@ -622,7 +622,7 @@ class _KAccountsModel with ChangeNotifier implements ReassembleHandler {
               if (_tokenList.length > _currentTokenPos) {
                 _nextPageToken = _tokenList[_currentTokenPos];
                 _previousPageToken = null;
-                print('(default) current pos --> $_currentTokenPos');
+                //print('(default) current pos --> $_currentTokenPos');
               }
               _totalCount = _jsonObj['totalCount'] as int;
             }
@@ -637,8 +637,8 @@ class _KAccountsModel with ChangeNotifier implements ReassembleHandler {
                 _previousPageToken = '';
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
-              print('(next) current pos --> $_currentTokenPos');
-              print('student list --> $_tokenList');
+              //print('(next) current pos --> $_currentTokenPos');
+              //print('student list --> $_tokenList');
             }
             if (isPrev) {
               _currentTokenPos--;
@@ -649,13 +649,13 @@ class _KAccountsModel with ChangeNotifier implements ReassembleHandler {
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
               _nextPageToken = _tokenList[_currentTokenPos];
-              print('(prev) current pos --> $_currentTokenPos');
-              print('student list --> $_tokenList');
+              //print('(prev) current pos --> $_currentTokenPos');
+              //print('student list --> $_tokenList');
               _widgetIndex -= _studentAccListItem.length;
             }
           }
         } on FormatException catch (e) {
-          print('getKgmsStudents data = $result and error = $e');
+          //print('getKgmsStudents data = $result and error = $e');
           _errorMsg = '$result';
           _isError = true;
         }
@@ -685,13 +685,13 @@ class _KAccountsModel with ChangeNotifier implements ReassembleHandler {
 
   @override
   void reassemble() {
-    print('Did hot-reload from _KAccountsModel !');
+    //print('Did hot-reload from _KAccountsModel !');
   }
 
   @override
   void dispose() {
     _isNotDisposed = false;
-    print('disposing _KAccountsModel !');
+    //print('disposing _KAccountsModel !');
   }
 }
 
@@ -764,7 +764,7 @@ class _KgmsAccountsBody extends StatelessWidget {
                   'hasInstallmentId': hasInstallmentId,
                 };
                 var bodyStr = convert.jsonEncode(body);
-                print('delete bodyStr --> $bodyStr');
+                //print('delete bodyStr --> $bodyStr');
                 var res =
                     await dataStoreServ.updateStudentAccountStatusInfo(bodyStr);
                 if (res) {
@@ -787,7 +787,7 @@ class _KgmsAccountsBody extends StatelessWidget {
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // //print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -852,9 +852,9 @@ class _KgmsAccountsBody extends StatelessWidget {
                       child: TextButton(
                         child: const Text('Installment'),
                         onPressed: () async {
-                          //print(
+                          ////print(
                           //    'acc take installment id --> ${accInfo.installmentId}');
-                          //print(
+                          ////print(
                           //    'isContainsInstallment --> ${accInfo.isContainsInstallment}');
                           var dateStr =
                               '${accInfo.dtDay}-${accInfo.dtMonth}-${accInfo.dtYear}';
@@ -895,8 +895,8 @@ class _KgmsAccountsBody extends StatelessWidget {
                     //TextButton(
                     //  child: const Text('Edit'),
                     //  onPressed: () {
-                    //    print('acc transaction modify -->');
-                    //    //cacheServ.getClassImgUrlCache('nursery').then((res)=>print('nursery res --> $res'));
+                    //    //print('acc transaction modify -->');
+                    //    //cacheServ.getClassImgUrlCache('nursery').then((res)=>//print('nursery res --> $res'));
                     //  },
                     //  style: ButtonStyle(
                     //    foregroundColor: MaterialStateProperty.all<Color>(
@@ -912,7 +912,7 @@ class _KgmsAccountsBody extends StatelessWidget {
                     TextButton(
                       child: const Text('Delete'),
                       onPressed: () {
-                        //print('acc transaction delete -->');
+                        ////print('acc transaction delete -->');
                         var dateStr =
                             '${accInfo.dtDay}-${accInfo.dtMonth}-${accInfo.dtYear}';
                         var isMainInstallment = accInfo.isInstallment &&
@@ -976,7 +976,7 @@ class _KgmsAccountsBody extends StatelessWidget {
                           separatorBuilder: (context, index) => const Divider(
                                 height: 4.2,
                               ),
-                          cacheExtent: itemLen * 100.0,
+                          cacheExtent: itemLen * 500.0,
                           itemBuilder: (context, index) => _studentAccTile(
                               context,
                               snapshot.studentAccListItem[index],
@@ -1105,14 +1105,14 @@ class _AccountCollectionState extends State<_AccountCollection> {
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
                   fontSize: 17)), onConfirm: (date) async {
-        //print('confirm $date');
+        ////print('confirm $date');
         var dayStr =
             date.day < 10 ? '0${date.day.toString()}' : date.day.toString();
         var monthStr = date.month < 10
             ? '0${date.month.toString()}'
             : date.month.toString();
         var dateStr = '${dayStr}/${monthStr}/${date.year.toString()}';
-        //print('date selected --> $dateStr');
+        ////print('date selected --> $dateStr');
         setState(() {
           collection_date = dateStr;
         });
@@ -1159,7 +1159,7 @@ class _AccountCollectionState extends State<_AccountCollection> {
       'sessionYear': sessionYear,
     };
     var bodyStr = convert.jsonEncode(collectionBody);
-    print('_submitCollection --> $bodyStr');
+    //print('_submitCollection --> $bodyStr');
     var result = await dataStoreServ.uploadStudentAccountInfo(bodyStr);
     return result;
   }
@@ -1319,7 +1319,7 @@ class _AccountCollectionState extends State<_AccountCollection> {
                               width: MediaQuery.of(context).size.width * 0.28,
                               child: ElevatedButton.icon(
                                 onPressed: () async {
-                                  //print('get date !');
+                                  ////print('get date !');
                                   clearKeyBoard(context);
                                   var dt = _getDateFromString(collection_date);
                                   _getDate(context, dt);
@@ -1406,7 +1406,7 @@ class _AccountCollectionState extends State<_AccountCollection> {
                               child: ElevatedButton.icon(
                                 onPressed: widget.installmentId == null
                                     ? () async {
-                                        //print('get date !');
+                                        ////print('get date !');
                                         clearKeyBoard(context);
                                         if (_feeTypeCtrl == null) {
                                           kAlert(
@@ -1423,7 +1423,7 @@ class _AccountCollectionState extends State<_AccountCollection> {
                                                           'admissionFee',
                                                   //showMonths: true,
                                                   onSelect: (String value) {
-                                                    //print('result from ui --> $value');
+                                                    ////print('result from ui --> $value');
                                                     setState(() {
                                                       collection_session =
                                                           value;
@@ -1592,7 +1592,7 @@ class _AccountCollectionState extends State<_AccountCollection> {
             children: <Widget>[
               ElevatedButton(
                 onPressed: () async {
-                  //print('save collection');
+                  ////print('save collection');
                   if (_isValidated()) {
                     bool _internet = await isInternetAvailable();
                     if (_internet) {
@@ -1778,7 +1778,7 @@ class _InstallemtCollectionState extends State<_InstallemtCollection> {
                     _isError = true;
                     _isFurtherInstallment = false;
                   });
-                  print('getStudentAccountInstallmentInfo err --> $e');
+                  //print('getStudentAccountInstallmentInfo err --> $e');
                 }
               }
             }));
@@ -1955,8 +1955,8 @@ class _InstallemtCollectionState extends State<_InstallemtCollection> {
               padding: const EdgeInsets.only(right: 30.0),
               child: ElevatedButton(
                 onPressed: () async {
-                  //print('take installment @keyId --> ${widget.keyId}');
-                  //print('take installment @instId --> ${widget.installmentId}');
+                  ////print('take installment @keyId --> ${widget.keyId}');
+                  ////print('take installment @instId --> ${widget.installmentId}');
                   animatedCustomNonDismissibleAlert(
                       context, _collectionWidg(context));
                 },
@@ -2028,7 +2028,7 @@ DateTime _getDateFromString(String dt) {
         return DateTime(year, month, day);
       }
     } catch (e) {
-      print(e);
+      //print(e);
     }
   }
   return DateTime.now();
@@ -2214,14 +2214,14 @@ class _KAccountsRestoreModel with ChangeNotifier implements ReassembleHandler {
       'studentId': _studentId,
       'installmentId': '',
       'isActive': false,
-      'limit': 3,
+      'limit': 10,
       'last': token == null ? '' : token,
       'dtDay': 0,
       'dtMonth': 0,
       'dtYear': 0,
     };
     var queryStr = convert.jsonEncode(queryMap);
-    print('query str --> $queryStr');
+    ////print('query str --> $queryStr');
     dataStoreServ.getStudentAccountInfo(queryStr).then((result) {
       if (_isNotDisposed1) {
         try {
@@ -2239,7 +2239,7 @@ class _KAccountsRestoreModel with ChangeNotifier implements ReassembleHandler {
               if (_tokenList.length > _currentTokenPos) {
                 _nextPageToken = _tokenList[_currentTokenPos];
                 _previousPageToken = null;
-                print('(default) current pos --> $_currentTokenPos');
+                ////print('(default) current pos --> $_currentTokenPos');
               }
               _totalCount = _jsonObj['totalCount'] as int;
             }
@@ -2254,8 +2254,8 @@ class _KAccountsRestoreModel with ChangeNotifier implements ReassembleHandler {
                 _previousPageToken = '';
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
-              print('(next) current pos --> $_currentTokenPos');
-              print('student acc list --> $_tokenList');
+              //print('(next) current pos --> $_currentTokenPos');
+              //print('student acc list --> $_tokenList');
             }
             if (isPrev) {
               _currentTokenPos--;
@@ -2266,13 +2266,13 @@ class _KAccountsRestoreModel with ChangeNotifier implements ReassembleHandler {
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
               _nextPageToken = _tokenList[_currentTokenPos];
-              print('(prev) current pos --> $_currentTokenPos');
-              print('student acc list --> $_tokenList');
+              //print('(prev) current pos --> $_currentTokenPos');
+              //print('student acc list --> $_tokenList');
               _widgetIndex -= _studentAccListItem.length;
             }
           }
         } on FormatException catch (e) {
-          print('getStudentAccountInfo data = $result and error = $e');
+          //print('getStudentAccountInfo data = $result and error = $e');
           _errorMsg = '$result';
           _isError = true;
         }
@@ -2293,13 +2293,13 @@ class _KAccountsRestoreModel with ChangeNotifier implements ReassembleHandler {
 
   @override
   void reassemble() {
-    print('Did hot-reload from _KAccountsRestoreModel !');
+    //print('Did hot-reload from _KAccountsRestoreModel !');
   }
 
   @override
   void dispose() {
     _isNotDisposed1 = false;
-    print('disposing _KAccountsRestoreModel !');
+    //print('disposing _KAccountsRestoreModel !');
   }
 }
 
@@ -2353,7 +2353,7 @@ class _AccountRestoreTransaction extends StatelessWidget {
                   'hasInstallmentId': hasInstallmentId,
                 };
                 var bodyStr = convert.jsonEncode(body);
-                print('restore bodyStr --> $bodyStr');
+                //print('restore bodyStr --> $bodyStr');
                 var res =
                     await dataStoreServ.updateStudentAccountStatusInfo(bodyStr);
                 if (res) {
@@ -2373,7 +2373,7 @@ class _AccountRestoreTransaction extends StatelessWidget {
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // //print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -2419,7 +2419,7 @@ class _AccountRestoreTransaction extends StatelessWidget {
                   //'hasInstallmentId': hasInstallmentId,
                 };
                 var bodyStr = convert.jsonEncode(body);
-                print('restore bodyStr --> $bodyStr');
+                //print('restore bodyStr --> $bodyStr');
                 var res = await dataStoreServ.deleteStudentAccountInfo(bodyStr);
                 if (res) {
                   //Provider.of<_KAccountsRestoreModel>(context, listen: false)
@@ -2438,7 +2438,7 @@ class _AccountRestoreTransaction extends StatelessWidget {
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // //print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -2526,7 +2526,7 @@ class _AccountRestoreTransaction extends StatelessWidget {
                     TextButton(
                       child: const Text('X Delete'),
                       onPressed: () async {
-                        //print('Delete student id --> ${accInfo.keyId}');
+                        ////print('Delete student id --> ${accInfo.keyId}');
                         var dateStr =
                             '${accInfo.dtDay}-${accInfo.dtMonth}-${accInfo.dtYear}';
                         var isMainInstallment = accInfo.isInstallment &&
@@ -2559,7 +2559,7 @@ class _AccountRestoreTransaction extends StatelessWidget {
                     TextButton(
                       child: const Text('^ Restore'),
                       onPressed: () async {
-                        //print('Restore student id --> ${accInfo.keyId}');
+                        ////print('Restore student id --> ${accInfo.keyId}');
                         var dateStr =
                             '${accInfo.dtDay}-${accInfo.dtMonth}-${accInfo.dtYear}';
                         var isMainInstallment = accInfo.isInstallment &&
@@ -2621,7 +2621,7 @@ class _AccountRestoreTransaction extends StatelessWidget {
                           separatorBuilder: (context, index) => const Divider(
                                 height: 4.2,
                               ),
-                          cacheExtent: itemLen * 100.0,
+                          cacheExtent: itemLen * 500.0,
                           itemBuilder: (context, index) =>
                               _studentAccountDetailsWidget(
                                   context,

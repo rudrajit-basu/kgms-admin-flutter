@@ -68,7 +68,7 @@ class _AdmissionStudentData {
   Map<String, dynamic> get accountData => _accountData;
 
   Future<void> resetData() async {
-    //print('reset admission student data !');
+    ////print('reset admission student data !');
     _studentData.updateAll((k, v) {
       if (k == 'medium') {
         return 'English';
@@ -97,7 +97,7 @@ class _AdmissionStudentData {
   Function reloadCurrentForm;
 
   Future<void> setData(Map stdData, Map prtData, Map accData, String id) async {
-    print('std data --> ${stdData.toString()}');
+    //print('std data --> ${stdData.toString()}');
     _studentData.updateAll((k, v) {
       if (stdData.containsKey(k))
         return stdData[k];
@@ -141,7 +141,7 @@ class _AdmissionStudentData {
   Map<String, dynamic> get admissionConfig => _admissionConfig;
 
   Future<void> setDataForEdit(Map stdData) async {
-    //print('edit data --> $stdData');
+    ////print('edit data --> $stdData');
     _studentData.updateAll((k, v) {
       if (stdData.containsKey(k))
         return stdData[k];
@@ -212,7 +212,7 @@ class KgmsAdmissionState extends State<KgmsAdmission> {
             icon: const Icon(Icons.done),
             iconSize: 27,
             onPressed: () async {
-              print('reset admission form');
+              ////print('reset admission form');
               _admissionData
                   .resetData()
                   .then((_) => tabController.animateTo(0));
@@ -223,7 +223,7 @@ class KgmsAdmissionState extends State<KgmsAdmission> {
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // //print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -255,7 +255,7 @@ class KgmsAdmissionState extends State<KgmsAdmission> {
                 indicatorColor: Colors.green,
                 indicatorWeight: 2.5,
                 onTap: (value) async {
-                  //print('tabBar --> $value');
+                  ////print('tabBar --> $value');
                   clearKeyBoard(context);
                 },
               ),
@@ -264,7 +264,7 @@ class KgmsAdmissionState extends State<KgmsAdmission> {
                 iconSize: 24,
                 tooltip: 'back',
                 onPressed: () {
-                  //print('back');
+                  ////print('back');
                   Navigator.pop(context);
                   if (isStudentEdit) _admissionData.resetData();
                 },
@@ -279,7 +279,7 @@ class KgmsAdmissionState extends State<KgmsAdmission> {
                               const Icon(Icons.restore_page_outlined, size: 30),
                           tooltip: 'reset admissions',
                           onPressed: () async {
-                            //print('reset admissions !');
+                            ////print('reset admissions !');
                             animatedCustomNonDismissibleAlert(context,
                                 _resetFormAlertW(context, tabController));
                           },
@@ -292,20 +292,19 @@ class KgmsAdmissionState extends State<KgmsAdmission> {
                           tooltip: 'pending admissions',
                           onPressed: () async {
                             clearKeyBoard(context);
-                            //print('admission pending !');
+                            ////print('admission pending !');
                             animatedCustomNonDismissibleAlert(context,
                                 _PendingStudentListFromStorage(onEditStudent:
                                     (Map<String, dynamic> editData,
                                         String stdId) {
-                              print(
-                                  'pass params edit student --> ${editData.toString()}');
+                              //print('pass params edit student --> ${editData.toString()}');
                               _admissionData.setData(
                                   editData['studentData'],
                                   editData['parentData'],
                                   editData['accountData'],
                                   stdId);
                             }));
-                            //dataStoreServ.getPendingAdmissions().then((res) => print('pending list --> ${res.toString()}'));
+                            //dataStoreServ.getPendingAdmissions().then((res) => //print('pending list --> ${res.toString()}'));
                           },
                         ),
                       ),
@@ -454,7 +453,7 @@ Function _updateLatestValue(
     TextEditingController tec, String dataKey, Map<String, dynamic> dataMap) {
   Future<VoidCallback> addListenerToUpdate() async {
     if (tec.text != dataMap[dataKey].toString()) {
-      //print('Std latest changed value --> ${tec.text}');
+      ////print('Std latest changed value --> ${tec.text}');
       dataMap[dataKey] = tec.text;
     }
   }
@@ -527,7 +526,7 @@ class _KgmsAdmissionStudentFormState extends State<_KgmsAdmissionStudentForm> {
   //Function _updateLatestValue(TextEditingController tec, String dataKey) {
   //  Future<VoidCallback> addListenerToUpdate() async {
   //    if (tec.text != widget.studentData[dataKey].toString()) {
-  //      //print('Std latest changed value --> ${tec.text}');
+  //      ////print('Std latest changed value --> ${tec.text}');
   //      widget.studentData[dataKey] = tec.text;
   //    }
   //  }
@@ -559,7 +558,7 @@ class _KgmsAdmissionStudentFormState extends State<_KgmsAdmissionStudentForm> {
   }
 
   void clearStudentForm() {
-    print('clear form _KgmsAdmissionStudentFormState !');
+    //print('clear form _KgmsAdmissionStudentFormState !');
     if (mounted) {
       setState(() {
         _stdNameCtrl.text = widget.studentData['stdName'] as String;
@@ -611,14 +610,14 @@ class _KgmsAdmissionStudentFormState extends State<_KgmsAdmissionStudentForm> {
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
                   fontSize: 17)), onConfirm: (date) async {
-        //print('confirm $date');
+        ////print('confirm $date');
         var dayStr =
             date.day < 10 ? '0${date.day.toString()}' : date.day.toString();
         var monthStr = date.month < 10
             ? '0${date.month.toString()}'
             : date.month.toString();
         var dateStr = '${dayStr}/${monthStr}/${date.year.toString()}';
-        //print('date selected --> $dateStr');
+        ////print('date selected --> $dateStr');
         setState(() {
           widget.studentData[dataKey] = dateStr;
         });
@@ -990,7 +989,7 @@ class _KgmsAdmissionStudentFormState extends State<_KgmsAdmissionStudentForm> {
                             width: MediaQuery.of(context).size.width * 0.28,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                //print('get date !');
+                                ////print('get date !');
                                 clearKeyBoard(context);
                                 var dt = getDateFromString(
                                     widget.studentData['doa']);
@@ -1088,7 +1087,7 @@ class _KgmsAdmissionStudentFormState extends State<_KgmsAdmissionStudentForm> {
                             width: MediaQuery.of(context).size.width * 0.28,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                //print('get date !');
+                                ////print('get date !');
                                 clearKeyBoard(context);
                                 var dt = getDateFromString(
                                     widget.studentData['dob']);
@@ -1197,15 +1196,15 @@ class _KgmsAdmissionStudentFormState extends State<_KgmsAdmissionStudentForm> {
                           /*Next button start*/
                           onPressed: () async {
                             //if (_formKey.currentState.validate()) {
-                            //  //print('next to parent section !');
-                            //  //print('student name --> ${_stdNameCtrl.text}');
-                            //  //print('std class --> $_classNameCtrl');
-                            //  //print('std section --> $_sectionCtrl');
-                            //  //print('std roll no. --> ${_stdRollNoCtrl.text}');
+                            //  ////print('next to parent section !');
+                            //  ////print('student name --> ${_stdNameCtrl.text}');
+                            //  ////print('std class --> $_classNameCtrl');
+                            //  ////print('std section --> $_sectionCtrl');
+                            //  ////print('std roll no. --> ${_stdRollNoCtrl.text}');
                             //  //widget.toggleToTab1();
 
                             //  if(!widget.studentData['doa'].toString().isEmpty && !widget.studentData['dob'].toString().isEmpty) {
-                            //    print(widget.studentData.toString());
+                            //    //print(widget.studentData.toString());
                             //  }
                             //}
                             clearKeyBoard(context);
@@ -1213,7 +1212,7 @@ class _KgmsAdmissionStudentFormState extends State<_KgmsAdmissionStudentForm> {
                               widget.studentData['password'] = _getStdPassword(
                                   widget.studentData['stdName'].toString(),
                                   widget.studentData['dob'].toString());
-                              //print(widget.studentData.toString());
+                              ////print(widget.studentData.toString());
                               widget.toggleToTab1();
                             }
                           },
@@ -1325,7 +1324,7 @@ class _KgmsAdmissionParentFormState extends State<_KgmsAdmissionParentForm> {
   //Function _updateLatestValue(TextEditingController tec, String dataKey) {
   //  Future<VoidCallback> addListenerToUpdate() async {
   //    if (tec.text != widget.parentData[dataKey].toString()) {
-  //      //print('Std latest changed value --> ${tec.text}');
+  //      ////print('Std latest changed value --> ${tec.text}');
   //      widget.parentData[dataKey] = tec.text;
   //    }
   //  }
@@ -1351,7 +1350,7 @@ class _KgmsAdmissionParentFormState extends State<_KgmsAdmissionParentForm> {
   }
 
   void clearParentForm() {
-    print('clear form _KgmsAdmissionParentFormState !');
+    //print('clear form _KgmsAdmissionParentFormState !');
     if (mounted) {
       setState(() {
         _fatherNameCtrl.text = widget.parentData['fatherName'] as String;
@@ -1671,9 +1670,9 @@ class _KgmsAdmissionParentFormState extends State<_KgmsAdmissionParentForm> {
                           onPressed: () async {
                             clearKeyBoard(context);
                             if (_isValidated()) {
-                              //print('next to parent section !');
-                              //print('parent name --> ${_fatherNameCtrl.text}');
-                              //print(widget.parentData.toString());
+                              ////print('next to parent section !');
+                              ////print('parent name --> ${_fatherNameCtrl.text}');
+                              ////print(widget.parentData.toString());
                               widget.toggleToTab2();
                             }
                           },
@@ -1827,7 +1826,7 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
   //Function _updateLatestValue(TextEditingController tec, String dataKey) {
   //  Future<VoidCallback> addListenerToUpdate() async {
   //    if (tec.text != widget.accountData[dataKey].toString()) {
-  //      //print('Std latest changed value --> ${tec.text}');
+  //      ////print('Std latest changed value --> ${tec.text}');
   //      widget.accountData[dataKey] = tec.text;
   //    }
   //  }
@@ -1854,14 +1853,14 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
                   color: Colors.black87,
                   fontWeight: FontWeight.w500,
                   fontSize: 17)), onConfirm: (date) async {
-        //print('confirm $date');
+        ////print('confirm $date');
         //var dayStr =
         //    date.day < 10 ? '0${date.day.toString()}' : date.day.toString();
         var monthStr = date.month < 10
             ? '0${date.month.toString()}'
             : date.month.toString();
         var dateStr = '${monthStr}/${date.year.toString()}';
-        //print('date selected --> $dateStr');
+        ////print('date selected --> $dateStr');
         setState(() {
           widget.accountData[dataKey] = dateStr;
         });
@@ -1884,7 +1883,7 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
   }
 
   void clearAddressForm() {
-    print('clear form _KgmsAdmissionAddressFormState !');
+    //print('clear form _KgmsAdmissionAddressFormState !');
     if (mounted) {
       setState(() {
         _address1Ctrl.text = widget.accountData['address1'] as String;
@@ -2041,7 +2040,7 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
                                       MediaQuery.of(context).size.width * 0.36,
                                   child: ElevatedButton.icon(
                                     onPressed: () async {
-                                      //print('get date !');
+                                      ////print('get date !');
                                       clearKeyBoard(context);
                                       //var dt = getDateFromString(
                                       //    widget.accountData['forMonthYear']);
@@ -2052,7 +2051,7 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
                                           MultiselectForMonthYear(
                                               showMonths: true,
                                               onSelect: (String value) {
-                                                //print(
+                                                ////print(
                                                 //    'result from ui --> $value');
                                                 setState(() {
                                                   widget.accountData[
@@ -2355,25 +2354,23 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
                                   KCircularProgress(ctx: context);
                               cp.showCircularProgress();
 
-                              //print('next to parent section !');
-                              //print('parent name --> ${_fatherNameCtrl.text}');
+                              ////print('next to parent section !');
+                              ////print('parent name --> ${_fatherNameCtrl.text}');
                               //widget.toggleToTab2();
-                              //print(widget.accountData.toString());
+                              ////print(widget.accountData.toString());
                               if (!widget.isOnStudentEdit) {
-                                //print('fresh admission !');
+                                ////print('fresh admission !');
                                 var res = await widget.isAllFormDataValid();
-                                print(res);
+                                //print(res);
                                 if (res == 'ok') {
-                                  //print('std part id ---> ${widget.getPartId()}');
+                                  ////print('std part id ---> ${widget.getPartId()}');
                                   if (widget.isAdmissionConfig['isEdit']
                                       as bool) {
-                                    print(
-                                        'std id = ${widget.isAdmissionConfig['studentId'] as String}');
+                                    //print('std id = ${widget.isAdmissionConfig['studentId'] as String}');
                                     var result = await widget.saveAdmission(
                                         widget.isAdmissionConfig['studentId']
                                             as String);
-                                    print(
-                                        'edit insertNewAdmissionLocal res ---> $result');
+                                    //print('edit insertNewAdmissionLocal res ---> $result');
                                     if (result == 'ok') {
                                       cp.closeProgress();
                                       widget.onSuccessfulSave();
@@ -2385,16 +2382,15 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
                                       });
                                     }
                                   } else {
-                                    print('new admission by config !');
+                                    //print('new admission by config !');
                                     var ptID = widget.getPartId();
-                                    //print('ptID --> $ptID');
+                                    ////print('ptID --> $ptID');
                                     var availId = await dataStoreServ
                                         .getAvailableStdId(ptID);
-                                    print('available id ---> $availId');
+                                    //print('available id ---> $availId');
                                     var result =
                                         await widget.saveAdmission(availId);
-                                    print(
-                                        'insertNewAdmissionLocal res ---> $result');
+                                    //print('insertNewAdmissionLocal res ---> $result');
                                     if (result == 'ok') {
                                       cp.closeProgress();
                                       widget.onSuccessfulSave();
@@ -2414,8 +2410,8 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
                                   });
                                 }
                               } else {
-                                //print('edit admission !');
-                                //print(widget.accountData.toString());
+                                ////print('edit admission !');
+                                ////print(widget.accountData.toString());
                                 var res = await widget.isAllFormDataValid();
                                 if (res == 'ok') {
                                   var res1 = await widget.isDataChangedToEdit();
@@ -2426,7 +2422,7 @@ class _KgmsAdmissionAddressFormState extends State<_KgmsAdmissionAddressForm> {
                                       _showErrMsg = true;
                                     });
                                   } else {
-                                    //print('isDataChangedToEdit --> $res1');
+                                    ////print('isDataChangedToEdit --> $res1');
                                     var res2 = await widget.saveUpdate(res1);
                                     if (res2 == 'ok') {
                                       cp.closeProgress();
@@ -2587,7 +2583,7 @@ String _upperCaseFirstLetter(String str) {
 //        }
 //      }
 //    } catch (e) {
-//      print(e);
+//      //print(e);
 //    }
 //  }
 //  return DateTime.now();
@@ -2626,12 +2622,13 @@ class _PendingStudentListFromStorageState
     Future.delayed(
         const Duration(milliseconds: 1300),
         () => dataStoreServ.getPendingAdmissions().then((res) {
-              _controller.add(res);
-              if (mounted)
+              if (mounted) {
+                _controller.add(res);
                 setState(() => res.length > 0
                     ? _isPendingStudents = true
                     : _isPendingStudents = false);
-              print('_startFetchPendingList f() called !');
+              }
+              //print('_startFetchPendingList f() called !');
             }));
   }
 
@@ -2654,7 +2651,7 @@ class _PendingStudentListFromStorageState
             icon: const Icon(Icons.done),
             iconSize: 27,
             onPressed: () async {
-              print('delete std id ---> $stdId');
+              //print('delete std id ---> $stdId');
               //Navigator.pop(context);
               await dataStoreServ.deletePendingAdmission(stdId);
               _startFetchPendingList();
@@ -2665,7 +2662,7 @@ class _PendingStudentListFromStorageState
             icon: const Icon(Icons.clear),
             iconSize: 27,
             onPressed: () {
-              // print('Nav Pop');
+              // //print('Nav Pop');
               Navigator.pop(context);
             },
           ),
@@ -2749,7 +2746,7 @@ class _PendingStudentListFromStorageState
                   TextButton(
                     child: const Text('X Remove'),
                     onPressed: () {
-                      //print('Remove student --> $id !');
+                      ////print('Remove student --> $id !');
                       animatedCustomNonDismissibleAlert(
                           context,
                           _deletePendingStdAlertW(
@@ -2768,7 +2765,7 @@ class _PendingStudentListFromStorageState
                   TextButton(
                     child: const Text('/ Edit'),
                     onPressed: () async {
-                      //print('Edit student --> $id !');
+                      ////print('Edit student --> $id !');
                       var editData =
                           await dataStoreServ.getPendingStudentById(id);
                       widget.onEditStudent(editData, id);
@@ -2787,7 +2784,7 @@ class _PendingStudentListFromStorageState
                   TextButton(
                     child: const Text('^ Upload'),
                     onPressed: () async {
-                      //print('Upload student !');
+                      ////print('Upload student !');
                       bool _internet = await isInternetAvailable();
                       if (_internet) {
                         final KCircularProgress cp =
@@ -2891,7 +2888,7 @@ class _PendingStudentListFromStorageState
           visible: _isPendingStudents,
           child: ElevatedButton(
             onPressed: () async {
-              //print('Upload All students !');
+              ////print('Upload All students !');
               bool _internet = await isInternetAvailable();
               if (_internet) {
                 final KCircularProgress cp = KCircularProgress(ctx: context);
@@ -2965,7 +2962,7 @@ String _getStdPassword(String name, String dt) {
       return n4 + dtYear;
     }
   } catch (e) {
-    print(e);
+    //print(e);
   }
   return null;
 }
@@ -3154,7 +3151,7 @@ Future<String> _updateStudentDetailsToCloud(
     "studentMoreInfoKey": studentMoreKey,
     "studentMoreInfo": studentMoreInfo,
   };
-  //print('reqBody --> $reqBody');
+  ////print('reqBody --> $reqBody');
   var bodyStr = convert.jsonEncode(reqBody);
   var resp = await dataStoreServ.updateStudentBasicInfo(bodyStr);
   try {

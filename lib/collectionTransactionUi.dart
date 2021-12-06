@@ -61,7 +61,7 @@ class _KgmsCollectionTransactionAppBar extends StatelessWidget
         iconSize: 24,
         tooltip: 'back',
         onPressed: () {
-          //print('back');
+          ////print('back');
           Navigator.pop(context);
         },
       ),
@@ -112,7 +112,7 @@ class _KgmsCollectionTransactionAppBar extends StatelessWidget
             iconSize: 30,
             tooltip: 'more options',
             onPressed: () async {
-              //print('show drawer');
+              ////print('show drawer');
               Scaffold.of(context).openEndDrawer();
             },
           ),
@@ -258,7 +258,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                       Switch(
                         value: context.watch<_KTransactionModel>().isSwitchOn,
                         onChanged: (value) async {
-                          //print('switch value --> $value');
+                          ////print('switch value --> $value');
                           Provider.of<_KTransactionModel>(context,
                                   listen: false)
                               .setSwitchValue(value);
@@ -316,7 +316,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                             width: MediaQuery.of(context).size.width * 0.32,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                //print('get date !');
+                                ////print('get date !');
                                 clearKeyBoard(context);
                                 var isSearchMonthly = context
                                     .read<_KTransactionModel>()
@@ -342,7 +342,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                                           fontWeight: FontWeight.w500,
                                           fontSize: 17)),
                                   onConfirm: (date) async {
-                                    //print('confirm $date');
+                                    ////print('confirm $date');
                                     var dateStr = '';
                                     if (!isSearchMonthly) {
                                       var dayStr = date.day < 10
@@ -360,7 +360,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                                       dateStr =
                                           '$monthStr/${date.year.toString()}';
                                     }
-                                    //print('date selected --> $dateStr');
+                                    ////print('date selected --> $dateStr');
                                     Provider.of<_KTransactionModel>(context,
                                             listen: false)
                                         .setDateStr(dateStr);
@@ -430,7 +430,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                           width: MediaQuery.of(context).size.width * 0.36,
                           child: ElevatedButton.icon(
                             onPressed: () async {
-                              //print('get date !');
+                              ////print('get date !');
                               clearKeyBoard(context);
                               var feeTypeIndex = context
                                   .read<_KTransactionModel>()
@@ -443,7 +443,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                                           'admissionFee',
                                       //showMonths: true,
                                       onSelect: (String value) {
-                                        //print('result from ui --> $value');
+                                        ////print('result from ui --> $value');
                                         Provider.of<_KTransactionModel>(context,
                                                 listen: false)
                                             .setCollectionSession(value);
@@ -683,7 +683,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                   children: <Widget>[
                     ElevatedButton(
                       onPressed: () async {
-                        //print('Go and execute !');
+                        ////print('Go and execute !');
                         Navigator.of(context).pop();
                         Provider.of<_KTransactionModel>(context, listen: false)
                             .executeQuery();
@@ -708,7 +708,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        //print('Reset options !');
+                        ////print('Reset options !');
                         Provider.of<_KTransactionModel>(context, listen: false)
                             .resetSearch();
                       },
@@ -809,7 +809,7 @@ class _KgmsCollectionTransaction extends StatelessWidget {
       //              iconSize: 30,
       //              tooltip: 'restore transaction',
       //              onPressed: () {
-      //                //print('restore transaction');
+      //                ////print('restore transaction');
       //                //animatedCustomNonDismissibleAlert(
       //                //    context,
       //                //    _AccountRestoreTransactionWrapper(
@@ -987,10 +987,10 @@ class _KTransactionModel with ChangeNotifier implements ReassembleHandler {
       "session": _isSwitchOn ? _sessionList : [],
       "sessionYear": _isSwitchOn ? _sessionYear : 0,
       "last": token == null ? '' : token,
-      "limit": 20
+      "limit": 10
     };
     var queryStr = convert.jsonEncode(queryMap);
-    print('query str --> $queryStr');
+    //print('query str --> $queryStr');
     dataStoreServ.getAccountTransactionDetails(queryStr).then((result) {
       if (_isNotDisposed) {
         try {
@@ -1008,7 +1008,7 @@ class _KTransactionModel with ChangeNotifier implements ReassembleHandler {
               if (_tokenList.length > _currentTokenPos) {
                 _nextPageToken = _tokenList[_currentTokenPos];
                 _previousPageToken = null;
-                print('(default) current pos --> $_currentTokenPos');
+                ////print('(default) current pos --> $_currentTokenPos');
               }
               _totalCount = _jsonObj['totalCount'] as int;
             }
@@ -1023,8 +1023,8 @@ class _KTransactionModel with ChangeNotifier implements ReassembleHandler {
                 _previousPageToken = '';
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
-              print('(next) current pos --> $_currentTokenPos');
-              print('student list --> $_tokenList');
+              //print('(next) current pos --> $_currentTokenPos');
+              //print('student list --> $_tokenList');
             }
             if (isPrev) {
               _currentTokenPos--;
@@ -1035,13 +1035,13 @@ class _KTransactionModel with ChangeNotifier implements ReassembleHandler {
               else if (_currentTokenPos > 1)
                 _previousPageToken = _tokenList[_currentTokenPos - 2];
               _nextPageToken = _tokenList[_currentTokenPos];
-              print('(prev) current pos --> $_currentTokenPos');
-              print('student list --> $_tokenList');
+              //print('(prev) current pos --> $_currentTokenPos');
+              //print('student list --> $_tokenList');
               _widgetIndex -= _studentAccListItem.length;
             }
           }
         } on FormatException catch (e) {
-          print('getKgmsStudents data = $result and error = $e');
+          //print('getKgmsStudents data = $result and error = $e');
           _errorMsg = '$result';
           _isError = true;
         }
@@ -1219,13 +1219,13 @@ class _KTransactionModel with ChangeNotifier implements ReassembleHandler {
 
   @override
   void reassemble() {
-    print('Did hot-reload from _KTransactionModel !');
+    //print('Did hot-reload from _KTransactionModel !');
   }
 
   @override
   void dispose() {
     _isNotDisposed = false;
-    print('disposing _KTransactionModel !');
+    //print('disposing _KTransactionModel !');
   }
 }
 
@@ -1312,7 +1312,7 @@ class _KgmsCollectionTransactionBodyState
   //                'hasInstallmentId': hasInstallmentId,
   //              };
   //              var bodyStr = convert.jsonEncode(body);
-  //              print('delete bodyStr --> $bodyStr');
+  //              //print('delete bodyStr --> $bodyStr');
   //              var res =
   //                  await dataStoreServ.updateStudentAccountStatusInfo(bodyStr);
   //              if (res) {
@@ -1335,7 +1335,7 @@ class _KgmsCollectionTransactionBodyState
   //          icon: const Icon(Icons.clear),
   //          iconSize: 27,
   //          onPressed: () {
-  //            // print('Nav Pop');
+  //            // //print('Nav Pop');
   //            Navigator.pop(context);
   //          },
   //        ),
@@ -1400,9 +1400,9 @@ class _KgmsCollectionTransactionBodyState
               //        child: TextButton(
               //          child: const Text('Installment'),
               //          onPressed: () async {
-              //            //print(
+              //            ////print(
               //            //    'acc take installment id --> ${accInfo.installmentId}');
-              //            //print(
+              //            ////print(
               //            //    'isContainsInstallment --> ${accInfo.isContainsInstallment}');
               //            var dateStr =
               //                '${accInfo.dtDay}-${accInfo.dtMonth}-${accInfo.dtYear}';
@@ -1443,7 +1443,7 @@ class _KgmsCollectionTransactionBodyState
               //      TextButton(
               //        child: const Text('Delete'),
               //        onPressed: () {
-              //          //print('acc transaction delete -->');
+              //          ////print('acc transaction delete -->');
               //          var dateStr =
               //              '${accInfo.dtDay}-${accInfo.dtMonth}-${accInfo.dtYear}';
               //          var isMainInstallment = accInfo.isInstallment &&
@@ -1490,36 +1490,36 @@ class _KgmsCollectionTransactionBodyState
           } else {
             if (!snapshot.isQueryExecuted)
               return _loadingTile('No query executed !');
-            else  
-            switch (snapshot.isWaiting) {
-              case true:
-                return _loadingTile('Loading....');
-              default:
-                {
-                  if (snapshot.isError) {
-                    return _loadingTile(snapshot.errorMsg);
-                  } else {
-                    if (snapshot.studentAccListItem.isEmpty) {
-                      return _loadingTile('No Accounts Found !');
+            else
+              switch (snapshot.isWaiting) {
+                case true:
+                  return _loadingTile('Loading....');
+                default:
+                  {
+                    if (snapshot.isError) {
+                      return _loadingTile(snapshot.errorMsg);
                     } else {
-                      var itemLen = snapshot.studentAccListItem.length;
-                      var widLen = snapshot.widgetIndex;
-                      return ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: itemLen,
-                          separatorBuilder: (context, index) => const Divider(
-                                height: 4.2,
-                              ),
-                          //cacheExtent: itemLen * 100.0,
-                          itemBuilder: (context, index) => _studentAccTile(
-                              context,
-                              snapshot.studentAccListItem[index],
-                              index,
-                              widLen));
+                      if (snapshot.studentAccListItem.isEmpty) {
+                        return _loadingTile('No Accounts Found !');
+                      } else {
+                        var itemLen = snapshot.studentAccListItem.length;
+                        var widLen = snapshot.widgetIndex;
+                        return ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: itemLen,
+                            separatorBuilder: (context, index) => const Divider(
+                                  height: 4.2,
+                                ),
+                            cacheExtent: itemLen * 500.0,
+                            itemBuilder: (context, index) => _studentAccTile(
+                                context,
+                                snapshot.studentAccListItem[index],
+                                index,
+                                widLen));
+                      }
                     }
                   }
-                }
-            }
+              }
           }
         }
       });
