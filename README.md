@@ -1,16 +1,23 @@
-# kgms_admin
+# ![alt text][logo] &nbsp;&nbsp;kgms_admin
 
-A Flutter project to create android app for Khela Ghar Montessory School admin use.
+A Flutter project to create an android app for Khela Ghar Montessory School admin use.
 
-## Getting Started
+The app provides the following options to manage the school's student records, classwise online study materials (notes, pictures, videos and audio) and wesite events.
 
-This project is a Flutter application.
+* Login and Home screen
 
-A few resources to get you started for Flutter projects:
+<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_1.jpg" alt="kgms login" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_2.jpg" alt="Home screen" height="700"/>
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+* Wesite events @ [Khela Ghar Montessory School Website](https://kgmskid.web.app/)
 
-For help getting started with Flutter, view
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_3.jpg" alt="wesite events" height="700"/>
+
+* School classes and it's classwise online study materials (notes, pictures, videos and audio) @ [Khela Ghar Montessory Study App](https://kgmskid-study.web.app/)
+
+<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_4.jpg" alt="Kgms classes" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_5.jpg" alt="kgms class study home" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_6.jpg" alt="kgms class study notes" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_7.jpg" alt="kgms class study pictures" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_8.jpeg" alt="kgms class study videos list" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_9.jpg" alt="kgms class study videos play" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_10.jpg" alt="kgms class study audio" height="700"/>
+
+* School student record management system
+
+<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_11.jpg" alt="Kgms stdent admission" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_12.jpg" alt="kgms student list" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_13.jpg" alt="kgms student list" height="700"/>
+
+[logo]: https://github.com/rudrajit-basu/kgms-kid/blob/master/public/kgms_w64.png
