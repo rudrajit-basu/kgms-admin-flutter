@@ -35,18 +35,18 @@ class YoutubeServ {
   OAuth2Helper _oauth2Helper;
   String _userChannelUploadedVideoPlaylistId;
 
+  final GoogleOAuth2Client _client = GoogleOAuth2Client(
+      customUriScheme:
+          'com.googleusercontent.apps.817681647082-tc6afavlps6e81u3ckdrd4h9o252phr7',
+      redirectUri:
+          'com.googleusercontent.apps.817681647082-tc6afavlps6e81u3ckdrd4h9o252phr7:/oauth2redirect');
+
   Future<OAuth2Helper> get oauth2Helper async {
     if (_oauth2Helper == null) {
-      GoogleOAuth2Client client = GoogleOAuth2Client(
-          customUriScheme:
-              'com.googleusercontent.apps.817681647082-tc6afavlps6e81u3ckdrd4h9o252phr7',
-          redirectUri:
-              'com.googleusercontent.apps.817681647082-tc6afavlps6e81u3ckdrd4h9o252phr7:/oauth2redirect');
-
       //print('GoogleOAuth2Client completed -->');
 
       try {
-        _oauth2Helper = OAuth2Helper(client,
+        _oauth2Helper = OAuth2Helper(_client,
             grantType: OAuth2Helper.AUTHORIZATION_CODE,
             clientId:
                 '817681647082-tc6afavlps6e81u3ckdrd4h9o252phr7.apps.googleusercontent.com',
@@ -63,6 +63,29 @@ class YoutubeServ {
       }
     }
     return _oauth2Helper;
+  }
+
+  Future<void> initOauth2Helper() async {
+    if (_oauth2Helper == null) {
+      //print('GoogleOAuth2Client completed -->');
+
+      try {
+        _oauth2Helper = OAuth2Helper(_client,
+            grantType: OAuth2Helper.AUTHORIZATION_CODE,
+            clientId:
+                '817681647082-tc6afavlps6e81u3ckdrd4h9o252phr7.apps.googleusercontent.com',
+            scopes: [
+              'https://www.googleapis.com/auth/youtube',
+              'https://www.googleapis.com/auth/youtube.upload',
+              'https://www.googleapis.com/auth/youtubepartner',
+            ]);
+
+        //print('OAuth2Helper completed -->');
+      } catch (e) {
+        _oauth2Helper = null;
+        print('OAuth2Helper error --> $e');
+      }
+    }
   }
 
   bool get isOauthValid => _oauth2Helper != null ? true : false;
@@ -106,54 +129,6 @@ class YoutubeServ {
     }
     return null;
   }
-
-  //Future<String> getYtPlaylist(String classId) async {
-  //  final _oHelper = await oauth2Helper;
-  //  if (_oHelper != null) {
-  //    final playlistsReqStr =
-  //        _playlistsYUrl + '?part=snippet&channelId=$_channelIdY&maxResults=20';
-  //    var resp = await _oHelper.get(playlistsReqStr);
-  //    //print('resp completed -->');
-  //    if (resp.statusCode == 200) {
-  //      //print('resp status code 200');
-  //      var jsonResp = null;
-  //      try {
-  //        jsonResp = convert.jsonDecode(resp.body);
-  //      } on FormatException catch (e) {
-  //        print('jsonResp is not valid json');
-  //      }
-  //      if (jsonResp != null) {
-  //        //String _playlistsEtag = jsonResp['etag'] as String;
-  //        //print('playList etag ---> ${_playlistsEtag}');
-  //        var jsonArr = jsonResp['items'] as List;
-  //        List<VideoListTag> _tags =
-  //            jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
-  //        //cacheServ.setEtag(_playlistsYUrl, _playlistsEtag);
-  //        //databaseServ.insertPlaylist(_tags);
-  //        String jsonArrStr = convert.jsonEncode(_tags);
-  //        var _playlistId = null;
-  //        for (final tag in _tags) {
-  //          if (tag.snippet.title == classId) {
-  //            _playlistId = tag.id;
-  //            //print(tag.toString());
-  //            break;
-  //          }
-  //        }
-  //        //print('getYtPlaylist json str ---> $jsonArrStr');
-  //        fileServ.writeKeyWithData('classesAndPlaylistId', jsonArrStr);
-  //        //.then(
-  //        //    (result) => print(
-  //        //        'writeKeyWithData = key classesAndPlaylistId --> $result'));
-  //        return _playlistId;
-  //      }
-  //    } else {
-  //      print('resp status --> ${resp.statusCode}');
-  //      //print('resp headers --> ${resp.headers}');
-  //      //print('resp body --> ${resp.body}');
-  //    }
-  //  }
-  //  return null;
-  //}
 
   Future<String> getYtPlaylistItem(String playlistID, String pageToken) async {
     //String playlistID = await _getYtPlaylist(classId);
@@ -295,10 +270,10 @@ class YoutubeServ {
       String jsonStr, String userAgent) async {
     var tknResp = await oHelper.getToken();
     http.Response resp;
+    var client = http.Client();
     try {
       var headers1 = _getHeaders1(tknResp.accessToken, userAgent);
-      resp = await http.Client()
-          .put(Uri.parse(url), headers: headers1, body: jsonStr);
+      resp = await client.put(Uri.parse(url), headers: headers1, body: jsonStr);
       if (resp.statusCode == 401) {
         print('_ytPutMethod status = 401');
         if (tknResp.hasRefreshToken()) {
@@ -309,13 +284,15 @@ class YoutubeServ {
 
         if (tknResp != null) {
           var headers2 = _getHeaders1(tknResp.accessToken, userAgent);
-          resp = await http.Client()
-              .put(Uri.parse(url), headers: headers2, body: jsonStr);
+          resp = await client.put(Uri.parse(url),
+              headers: headers2, body: jsonStr);
         }
       }
       return resp;
     } catch (e) {
       print('error _ytPutMethod --> $e');
+    } finally {
+      client.close();
     }
     return null;
   }
@@ -328,6 +305,11 @@ class YoutubeServ {
     headers['User-Agent'] = userAgent;
     return headers;
   }
+
+  //Future<Map<String, String>> _getHeaders() async {
+  //  if (_currentUser != null) return await _currentUser.authHeaders;
+  //  return null;
+  //}
 
   String get recycleBinPlaylistId => _recycleBinPlaylistId;
 
@@ -604,3 +586,51 @@ final YoutubeServ yServ = YoutubeServ();
 //    }
 //    return null;
 //  }
+
+//Future<String> getYtPlaylist(String classId) async {
+//  final _oHelper = await oauth2Helper;
+//  if (_oHelper != null) {
+//    final playlistsReqStr =
+//        _playlistsYUrl + '?part=snippet&channelId=$_channelIdY&maxResults=20';
+//    var resp = await _oHelper.get(playlistsReqStr);
+//    //print('resp completed -->');
+//    if (resp.statusCode == 200) {
+//      //print('resp status code 200');
+//      var jsonResp = null;
+//      try {
+//        jsonResp = convert.jsonDecode(resp.body);
+//      } on FormatException catch (e) {
+//        print('jsonResp is not valid json');
+//      }
+//      if (jsonResp != null) {
+//        //String _playlistsEtag = jsonResp['etag'] as String;
+//        //print('playList etag ---> ${_playlistsEtag}');
+//        var jsonArr = jsonResp['items'] as List;
+//        List<VideoListTag> _tags =
+//            jsonArr.map((tagJson) => VideoListTag.fromJson(tagJson)).toList();
+//        //cacheServ.setEtag(_playlistsYUrl, _playlistsEtag);
+//        //databaseServ.insertPlaylist(_tags);
+//        String jsonArrStr = convert.jsonEncode(_tags);
+//        var _playlistId = null;
+//        for (final tag in _tags) {
+//          if (tag.snippet.title == classId) {
+//            _playlistId = tag.id;
+//            //print(tag.toString());
+//            break;
+//          }
+//        }
+//        //print('getYtPlaylist json str ---> $jsonArrStr');
+//        fileServ.writeKeyWithData('classesAndPlaylistId', jsonArrStr);
+//        //.then(
+//        //    (result) => print(
+//        //        'writeKeyWithData = key classesAndPlaylistId --> $result'));
+//        return _playlistId;
+//      }
+//    } else {
+//      print('resp status --> ${resp.statusCode}');
+//      //print('resp headers --> ${resp.headers}');
+//      //print('resp body --> ${resp.body}');
+//    }
+//  }
+//  return null;
+//}

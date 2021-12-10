@@ -26,6 +26,7 @@ import 'package:flutter/services.dart'
     show FilteringTextInputFormatter, TextInputFormatter;
 import 'dart:convert' as convert;
 import 'package:flutter_dotenv/flutter_dotenv.dart' as DotEnv;
+import 'src/youtubeService.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -994,6 +995,7 @@ class _LifeCycleManagerState extends State<LifeCycleManager>
   @override
   void dispose() {
     firestoreServ.disposeService();
+    //yServ.disposeGoogleSignInForYt();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

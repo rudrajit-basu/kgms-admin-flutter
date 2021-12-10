@@ -11,7 +11,7 @@ description: Khela Ghar Montessory School Admin project.
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.4
+version: 1.0.4+1
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
@@ -36,6 +36,8 @@ dependencies:
   flutter_sound: ^0.1.20
   flutter_dotenv: ^3.1.0
   charts_flutter: ^0.10.0
+  #google_sign_in: ^4.5.9
+  #googleapis_auth: ^0.2.12+1
   # sqflite: ^1.1.6+5
   #file_picker: ^1.12.0
   #shared_preferences: ^0.5.12+4

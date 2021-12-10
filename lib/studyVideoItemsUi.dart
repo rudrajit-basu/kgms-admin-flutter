@@ -236,6 +236,8 @@ class VideoItemModel with ChangeNotifier {
 
   //var exampleList = ['First', 'Second', 'Third'];
 
+  //StreamSubscription<bool> _isYtUserSignedInSubscription = null;
+
   VideoItemModel(String classId) {
     _setYtPlaylistItem(classId);
   }
@@ -295,12 +297,12 @@ class VideoItemModel with ChangeNotifier {
         _totalResults = _jsonResp['totalResults'] as int;
       }
 
-      if (_userAgent == '') {
-        final usrAgent = await _getHttpUserAgent();
-        if (usrAgent != "err") {
-          _userAgent = usrAgent + ' /Dart package:com.kgmskid.kgms_admin';
-        }
-      }
+      //if (_userAgent == '') {
+      //  final usrAgent = await _getHttpUserAgent();
+      //  if (usrAgent != "err") {
+      //    _userAgent = usrAgent + ' /Dart package:com.kgmskid.kgms_admin';
+      //  }
+      //}
       _isWaiting = false;
       notifyListeners();
     });
@@ -321,29 +323,6 @@ class VideoItemModel with ChangeNotifier {
     }
     return _plId;
   }
-
-  //Future<String> _getPlalistIdTitle(String classId) async {
-  //  String playlistId = null;
-  //  String data = await fileServ.readDataByKey('classesAndPlaylistId');
-  //  if (data != 'nil') {
-  //    var _jsonArr = null;
-  //    try {
-  //      _jsonArr = convert.jsonDecode(data) as List;
-  //    } on FormatException catch (e) {
-  //      print('_validatePlaylistUpdate data = $data and error = $e');
-  //    }
-  //    if (_jsonArr != null) {
-  //      for (final tag in _jsonArr) {
-  //        var clId = tag['title'] as String;
-  //        if (classId == clId) {
-  //          playlistId = tag['id'] as String;
-  //          break;
-  //        }
-  //      }
-  //    }
-  //  }
-  //  return playlistId;
-  //}
 
   void removeAll() {
     _videoItems.clear();
@@ -726,89 +705,32 @@ class StudyVideoBody extends StatelessWidget {
         ),
       );
 
-  //Card _studyClassVideoTile(BuildContext context, _VideoItem item) => Card(
-  //      color: Colors.orange[300],
-  //      elevation: 10,
-  //      shape: RoundedRectangleBorder(
-  //        borderRadius: BorderRadius.all(Radius.circular(8)),
-  //      ),
-  //      child: ListTile(
-  //          title: Text(
-  //            item.title,
-  //            style: TextStyle(
-  //              color: Colors.black87,
-  //              fontWeight: FontWeight.w500,
-  //            ),
-  //          ),
-  //          leading: CircleAvatar(
-  //            child: Text(
-  //              (item.position + 1).toString(),
-  //              style: TextStyle(
-  //                color: Colors.black87,
-  //                fontWeight: FontWeight.w600,
-  //              ),
-  //            ),
-  //          ),
-  //          trailing: IconButton(
-  //            icon: Icon(Icons.delete_forever),
-  //            tooltip: 'remove video',
-  //            onPressed: () {
-  //              //String _playlistId =
-  //              //    Provider.of<VideoItemModel>(context, listen: false)
-  //              //        .classPlayListID;
-  //              //print('remove video item --> ${item.videoId}, ${item.id}');
-  //              //print('playlistId --> $_playlistId');
-  //              kDAlert(context, _removeVideoAlertW(context, item));
-  //            },
-  //          ),
-  //          subtitle: Padding(
-  //            padding: const EdgeInsets.only(top: 5.0),
-  //            child: Text(
-  //              '<status - ${item.status}>',
-  //              style: TextStyle(
-  //                color: Colors.black87,
-  //                fontWeight: FontWeight.w400,
-  //              ),
-  //            ),
-  //          ),
-  //          onTap: () async {
-  //            //print(
-  //            //    'play video item and status --> ${item.videoId} and ${item.status}');
-  //            await _playYtVideo(item.videoId);
-  //          }),
-  //    );
-
   Widget unlistedVideosWidget(BuildContext context) =>
       Consumer<VideoItemModel>(builder: (context, snapshot, _) {
         if (snapshot == null) {
           return _loadingTile('snapshot null !');
         } else {
-          if (snapshot.videoItems == null) {
-            return _loadingTile('snapshot videoItems null !');
-          } else {
-            switch (snapshot.isWaiting) {
-              case true:
-                return _loadingTile('Loading....');
-              default:
-                {
-                  if (snapshot.isError) {
-                    return _loadingTile(snapshot.errorMsg);
+          switch (snapshot.isWaiting) {
+            case true:
+              return _loadingTile('Loading....');
+            default:
+              {
+                if (snapshot.isError) {
+                  return _loadingTile(snapshot.errorMsg);
+                } else {
+                  if (snapshot.videoItems.isEmpty) {
+                    return _loadingTile('No Video Items !');
                   } else {
-                    if (snapshot.videoItems.isEmpty) {
-                      return _loadingTile('No Video Items !');
-                    } else {
-                      return ListView.separated(
-                          itemCount: snapshot.videoItems.length,
-                          separatorBuilder: (context, index) => Divider(
-                                height: 4.2,
-                              ),
-                          itemBuilder: (context, index) =>
-                              _studyClassVideoTile1(
-                                  context, snapshot.videoItems[index]));
-                    }
+                    return ListView.separated(
+                        itemCount: snapshot.videoItems.length,
+                        separatorBuilder: (context, index) => Divider(
+                              height: 4.2,
+                            ),
+                        itemBuilder: (context, index) => _studyClassVideoTile1(
+                            context, snapshot.videoItems[index]));
                   }
                 }
-            }
+              }
           }
         }
       });
