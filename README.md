@@ -27,6 +27,8 @@ The app is using two different cloud services as follows
 * [Firebase](https://firebase.google.com/) (Firestore, Storage) to manage the school's class online study and website's events.
 * [Deta](https://www.deta.sh/) (Base, Micro) to manage the school's student record system.
 
+The server side node.js app running on Deta Micro using Deta Base is [here](https://github.com/rudrajit-basu/kgmskid_accounts_micro).
+
 The third party api used are as follows
 * [Email validator](https://pub.dev/packages/email_validator)
 * [Shared preferences](https://pub.dev/packages/shared_preferences)
