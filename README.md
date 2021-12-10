@@ -2,6 +2,8 @@
 
 A Flutter project to create an android app for Khela Ghar Montessory School admin use. (under development)
 
+The technical details are presented below the screen shots of the app.
+
 The app provides the following options to manage the school's student records, classwise online study materials (notes, pictures, videos and audio) and wesite events.
 
 * Login and Home screen
@@ -19,5 +21,25 @@ The app provides the following options to manage the school's student records, c
 * School's student record management system
 
 <img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_11.jpg" alt="Kgms stdent admission" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_12.jpg" alt="kgms student list" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_15.jpg" alt="kgms student list" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_13.jpg" alt="kgms student list" height="700"/> &nbsp;&nbsp;&nbsp;<img src="https://github.com/rudrajit-basu/kgms-admin-flutter/blob/master/screenShots/Screenshot_14.jpg" alt="kgms student list" height="700"/>
+
+
+The app is using two different cloud services as follows
+* [Firebase](https://firebase.google.com/) (Firestore, Storage) to manage the school's class online study and website's events.
+* [Deta](https://www.deta.sh/) (Base, Micro) to manage the school's student record system.
+
+The third party api used are as follows
+* [Email validator](https://pub.dev/packages/email_validator)
+* [Shared preferences](https://pub.dev/packages/shared_preferences)
+* [File picker](https://pub.dev/packages/file_picker)
+* [Cached network image](https://pub.dev/packages/cached_network_image)
+* [Provider](https://pub.dev/packages/provider)
+* [Oauth2 client](https://pub.dev/packages/oauth2_client)
+* [DateTime picker](https://pub.dev/packages/flutter_datetime_picker)
+* [Path provider](https://pub.dev/packages/path_provider)
+* [Sound recorder](https://pub.dev/packages/flutter_sound)
+* [Dot Env](https://pub.dev/packages/flutter_dotenv)
+* [Charts](https://pub.dev/packages/charts_flutter)
+
+contact @ rudrajit.basu@gmail.com or rbasu.linux@gmail.com.
 
 [logo]: https://github.com/rudrajit-basu/kgms-kid/blob/master/public/kgms_w64.png
