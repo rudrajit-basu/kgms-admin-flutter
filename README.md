@@ -1,6 +1,6 @@
 # ![alt text][logo] &nbsp;&nbsp;kgms_admin
 
-A Flutter project to create an android app for Khela Ghar Montessory School admin use.
+A Flutter project to create an android app for Khela Ghar Montessory School admin use. (under development)
 
 The app provides the following options to manage the school's student records, classwise online study materials (notes, pictures, videos and audio) and wesite events.
 
