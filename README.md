@@ -41,6 +41,8 @@ The third party api used are as follows
 * [Sound recorder](https://pub.dev/packages/flutter_sound)
 * [Dot Env](https://pub.dev/packages/flutter_dotenv)
 * [Charts](https://pub.dev/packages/charts_flutter)
+* [Youtube api v3](https://developers.google.com/youtube/v3/guides/auth/installed-apps)
+* [Youtube player](https://developers.google.com/youtube/android/player)
 
 contact @ rudrajit.basu@gmail.com or rbasu.linux@gmail.com.
 
